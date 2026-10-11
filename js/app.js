@@ -16,7 +16,10 @@ var S = {
   bankFilter: {subject:"all", type:"all", diff:"all", q:""},
   importPreview: null,
   manualType: "multiple_choice",
-  navPanelOpen: false
+  navPanelOpen: false,
+  quiz: null,          // {phase, subject, questions, idx, score, streak, bestStreak, answers, perQ, qEnd, timerId, sound, locked}
+  tts: null,           // {subject, grid, entryIdx, locked, started, done}
+  leaveGuard: null     // {route, message, onQuit} — cegah keluar tak sengaja dari permainan aktif
 };
 
 /* ---------- helpers ---------- */
@@ -70,13 +73,18 @@ window.addEventListener("beforeunload", function(e){
   if(S.session && S.session.status==="RUNNING"){
     window.TKAStore.setActive(S.session);
     e.preventDefault(); e.returnValue="";
+  } else if(S.leaveGuard){
+    e.preventDefault(); e.returnValue="";
   }
 });
-// Tangani tombol back: dorong state agar tidak langsung keluar saat simulasi
+// Tangani tombol back: dorong state agar tidak langsung keluar dari permainan aktif
 window.addEventListener("popstate", function(){
   if(S.session && S.session.status==="RUNNING"){
     history.pushState(null,"",location.href);
     toast("Simulasi sedang berjalan — selesaikan atau gunakan tombol Selesai.");
+  } else if(S.leaveGuard){
+    history.pushState(null,"",location.href);
+    toast("Permainan sedang berjalan — selesaikan dulu atau keluar lewat tombol.");
   }
 });
 
@@ -124,6 +132,7 @@ function finishSession(reason, fromFullscreen){
   if(!S.session || S.session.status!=="RUNNING") return;
   stopTimer();
   if(typeof closeNavPanel==="function") closeNavPanel();
+  S.leaveGuard=null;
   var ses=S.session;
   ses.status = reason==="COMPLETED" ? "COMPLETED" : (reason==="TIMEOUT"?"TIMEOUT":"TERMINATED_FULLSCREEN_EXIT");
   ses.endTime=Date.now();
@@ -161,7 +170,7 @@ function finishSession(reason, fromFullscreen){
 }
 
 /* ---------- router ---------- */
-var routes = ["dashboard","setup","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah"];
+var routes = ["dashboard","mapel","setup","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah","tts","kuis"];
 function parseHash(){
   var h=(location.hash||"#/").replace(/^#\/?/,"");
   var parts=h.split("?");
@@ -183,16 +192,19 @@ function setNav(path){
 function render(){
   var r=parseHash(), path=r.path;
   if(typeof closeNavPanel==="function" && path!=="simulasi") closeNavPanel();
-  // cegah navigasi tak sengaja saat simulasi berjalan
-  if(S.session && S.session.status==="RUNNING" && ["","setup","instruksi","bank","import","tambah","riwayat"].indexOf(path)!==-1){
-    // kembalikan ke simulasi + tawarkan konfirmasi keluar
-    location.hash="#/simulasi";
-    confirmLeaveSimulation();
+  // cegah navigasi tak sengaja dari permainan aktif (ujian / TTS / kuis)
+  if(S.leaveGuard && ["","mapel","setup","instruksi","bank","import","generator","tambah","riwayat","hasil","review"].indexOf(path)!==-1){
+    // kembalikan ke rute permainan + tawarkan konfirmasi keluar
+    location.hash=S.leaveGuard.route;
+    confirmLeaveGame();
     return;
   }
   setNav(path);
   window.scrollTo(0,0);
   if(path==="" ) return vDashboard();
+  if(path==="mapel") return vMapel(r.q.mode);
+  if(path==="tts") return vTTS(r.q.subject);
+  if(path==="kuis") return vKuis(r.q.subject);
   if(path==="setup") return vSetup(r.q.subject);
   if(path==="instruksi") return vInstruksi();
   if(path==="simulasi") return vSimulasi();
@@ -206,55 +218,91 @@ function render(){
   return vDashboard();
 }
 window.addEventListener("hashchange", render);
-function confirmLeaveSimulation(){
-  modal('<h3>Keluar dari simulasi?</h3><p class="hint">Simulasi sedang berjalan. Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.</p>'
-    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn" id="cStay">Tetap Kerjakan</button><button class="btn btn-danger" id="cOut">Ya, Akhiri</button></div>');
+function confirmLeaveGame(){
+  var g=S.leaveGuard;
+  if(!g) return;
+  modal('<h3>Keluar dari permainan?</h3><p class="hint">'+esc(g.message||"Progres permainan yang sedang berjalan akan hilang.")+'</p>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn" id="cStay">Tetap Main</button><button class="btn btn-danger" id="cOut">Ya, Keluar</button></div>');
   document.getElementById("cStay").onclick=function(){closeModal()};
-  document.getElementById("cOut").onclick=function(){closeModal(); finishSession("COMPLETED");};
+  document.getElementById("cOut").onclick=function(){closeModal(); var f=g.onQuit; S.leaveGuard=null; if(f) f();};
 }
+// Kompatibilitas: nama lama dipakai alur ujian
+function confirmLeaveSimulation(){ confirmLeaveGame(); }
 document.getElementById("hamburger").onclick=function(){ topnav.classList.toggle("open"); };
 document.getElementById("brandLink").onclick=function(){ topnav.classList.remove("open"); };
 topnav.addEventListener("click", function(){ topnav.classList.remove("open"); });
 
-/* ================= DASHBOARD ================= */
+/* ================= DASHBOARD — PILIH MODE BELAJAR ================= */
 function vDashboard(){
   var hist=window.TKAStore.getHistory();
   var totalSim=hist.length;
   var avg = totalSim? Math.round(hist.reduce(function(a,h){return a+h.nilai},0)/totalSim):0;
   var best = totalSim? Math.max.apply(null,hist.map(function(h){return h.nilai})):0;
   var totalSoal = window.TKAStore.getAllBank().length;
-  var cards = window.TKA_CONFIG.subjects.map(function(s){
-    var n=window.TKAStore.getBank(s.id).length;
-    return '<div class="card subj-card">'
-      +'<div class="subj-top"><span class="subj-icon" style="background:'+s.color+'">'+esc(s.icon)+'</span>'
-      +'<div><h3>'+esc(s.name)+'</h3><div style="font-size:12px;color:var(--muted)">'+n+' soal di bank</div></div></div>'
-      +'<p>'+esc(s.desc)+'. Bank soal campuran pilihan ganda, kompleks & benar/salah.</p>'
-      +'<div class="subj-meta"><span class="pill">Acak soal</span><span class="pill">Acak jawaban</span><span class="pill">Timer</span></div>'
-      +'<button class="btn btn-primary" data-start="'+s.id+'">Mulai Simulasi</button></div>';
+  var modes=["ujian","tts","kuis"].map(function(m){
+    var d=window.LEARN_MODES[m];
+    return '<div class="card mode-card-lg">'
+      +'<div class="mode-ico" style="background:'+d.color+'">'+d.icon+'</div>'
+      +'<h3>'+esc(d.title)+'</h3><p>'+esc(d.desc)+'</p>'
+      +'<button class="btn btn-primary" data-mode="'+m+'">Pilih Mode Ini</button></div>';
   }).join("");
-  var recent = hist.slice(0,5).map(histItem).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai simulasi pertamamu!</div>';
+  var recent = hist.slice(0,5).map(histItem).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai dari salah satu mode belajar!</div>';
   view.innerHTML =
     '<div class="hero"><div><h1>SIMULASI TKA</h1>'
-    +'<p>Latihan dan simulasi Tes Kemampuan Akademik untuk siswa SMK jurusan PPLG/RPL. Tiga tipe soal, timer otomatis, fullscreen CBT, pembahasan, dan riwayat nilai — semua tersimpan lokal di perangkatmu.</p></div>'
+    +'<p>Latihan Tes Kemampuan Akademik untuk siswa SMK jurusan PPLG/RPL lewat ujian simulasi, teka-teki silang, dan kuis interaktif — semua tersimpan lokal di perangkatmu.</p></div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn" href="#/generator">Buat Prompt AI</a></div></div>'
     +'<div class="stats">'
-    +'<div class="card stat"><b>'+totalSim+'</b><span>Total simulasi</span></div>'
+    +'<div class="card stat"><b>'+totalSim+'</b><span>Total permainan</span></div>'
     +'<div class="card stat"><b>'+avg+'</b><span>Rata-rata nilai</span></div>'
     +'<div class="card stat"><b>'+best+'</b><span>Nilai terbaik</span></div>'
     +'<div class="card stat"><b>'+totalSoal+'</b><span>Total soal di bank</span></div></div>'
-    +'<div class="section-title">Daftar Mata Pelajaran</div>'
-    +'<div class="grid-subjects">'+cards+'</div>'
+    +'<div class="section-title">Pilih Mode Belajar</div>'
+    +'<p class="hint" style="margin-top:-6px">Pilih cara belajar yang sesuai dengan keinginanmu.</p>'
+    +'<div class="grid-modes">'+modes+'</div>'
     +'<div class="section-title">Riwayat Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent)">Lihat semua →</a></div>'
     +'<div class="hist-list">'+recent+'</div>';
-  view.querySelectorAll("[data-start]").forEach(function(b){
-    b.onclick=function(){ location.hash="#/setup?subject="+b.getAttribute("data-start"); };
+  view.querySelectorAll("[data-mode]").forEach(function(b){
+    b.onclick=function(){ location.hash="#/mapel?mode="+b.getAttribute("data-mode"); };
   });
+}
+
+/* ================= PILIH MATA PELAJARAN PER MODE ================= */
+function vMapel(mode){
+  mode = window.LEARN_MODES[mode] ? mode : "ujian";
+  var d = window.LEARN_MODES[mode];
+  var cards = window.TKA_CONFIG.subjects.map(function(s){
+    var nBank=window.TKAStore.getBank(s.id).length;
+    var extra="", go="", btn="Pilih";
+    if(mode==="tts"){
+      var nW=(window.BANK_TTS&&window.BANK_TTS[s.id])?window.BANK_TTS[s.id].length:0;
+      extra = nW? nW+' kata TTS tersedia' : 'Belum ada kata TTS';
+      go = nW? '#/tts?subject='+s.id : '';
+    } else if(mode==="kuis"){
+      var avail=window.TKAGames.quizItemCount(s.id);
+      extra = avail? avail+' soal kuis tersedia' : 'Belum ada soal kuis';
+      go = avail? '#/kuis?subject='+s.id : '';
+    } else {
+      extra = nBank+' soal di bank';
+      go = '#/setup?subject='+s.id;
+    }
+    return '<div class="card subj-card">'
+      +'<div class="subj-top"><span class="subj-icon" style="background:'+s.color+'">'+esc(s.icon)+'</span>'
+      +'<div><h3>'+esc(s.name)+'</h3><div style="font-size:12px;color:var(--muted)">'+extra+'</div></div></div>'
+      +'<p>'+esc(s.desc)+'.</p>'
+      +(go? '<a class="btn btn-primary" href="'+go+'">'+btn+'</a>'
+          : '<div class="warn-box">Data belum tersedia untuk mode ini. Kelola soal lewat <a href="#/bank" style="text-decoration:underline">Bank Soal</a>.</div>')
+      +'</div>';
+  }).join("");
+  view.innerHTML='<a href="#/" class="btn btn-sm">← Pilih Mode</a>'
+    +'<div class="section-title">Pilih Mata Pelajaran — '+esc(d.title)+'</div>'
+    +'<p class="hint" style="margin-top:-6px">'+esc(d.desc)+'</p>'
+    +'<div class="grid-subjects">'+cards+'</div>';
 }
 function histItem(h){
   var cls = h.nilai>=80?"":h.nilai>=60?"mid":"low";
   var st = h.status==="COMPLETED"?'<span class="badge ok">Selesai</span>':h.status==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':'<span class="badge err">Dihentikan</span>';
   return '<div class="card hist-item"><div class="hist-score '+cls+'">'+h.nilai+'</div>'
-    +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' benar • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+' • Mode '+esc(window.timeModeLabel(h.mode||"normal"))+'</div></div>'
+    +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' benar • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+' • '+esc(window.historyModeLabel(h.mode||"normal"))+'</div></div>'
     +st+'</div>';
 }
 
@@ -389,6 +437,9 @@ function beginSimulation(){
   ses.endTime=Date.now()+ses.durationMs;
   ses.requestedCount=p.count;
   S.session=ses;
+  S.leaveGuard={ route:"#/simulasi",
+    message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
+    onQuit:function(){ finishSession("COMPLETED"); } };
   persistActive();
   history.pushState(null,"",location.href);
   // masuk fullscreen (resmi, aman) lalu ke halaman simulasi
@@ -446,7 +497,7 @@ function renderSim(){
     var cur2=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur2.indexOf(o.id)!==-1;
-      return '<label class="opt'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span></label>';
+      return '<label class="opt'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="txt">'+esc(o.text)+'</span></label>';
     }).join("")+'<p class="hint">Bisa pilih <b>lebih dari satu</b>. Nilai penuh hanya jika kombinasi tepat semua.</p>';
   } else if(q.type==="true_false_table"){
     var ans=(ses.answers[q.id]||{});
@@ -730,7 +781,7 @@ function vRiwayat(){
   var rows=filtered.map(function(h){
     var avg=h.avgSecPerQ!=null? ' • '+fmtAvgSec(h.avgSecPerQ)+'/soal' : '';
     return '<div class="card hist-item"><div class="hist-score '+(h.nilai>=80?"":h.nilai>=60?"mid":"low")+'">'+h.nilai+'</div>'
-      +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+avg+' • Mode '+esc(window.timeModeLabel(h.mode||"normal"))+' • '+(h.finishReason||h.status)+'</div></div>'
+      +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+avg+' • '+esc(window.historyModeLabel(h.mode||"normal"))+' • '+(h.finishReason||h.status)+'</div></div>'
       +'<div style="display:flex;gap:6px"><a class="btn btn-sm" href="#/review?id='+h.id+'">Bahasan</a><button class="btn btn-sm" data-del="'+h.id+'">Hapus</button></div></div>';
   }).join("") || '<div class="card pad hint">Belum ada riwayat untuk filter ini.</div>';
   view.innerHTML='<div class="section-title">Riwayat Simulasi</div>'
@@ -1024,6 +1075,441 @@ function vGenerator(){
       ta.remove();
     }
   };
+}
+
+/* ================= TEBAK-TEBAKAN (KUIS INTERAKTIF) ================= */
+var KUIS_COUNTS=[5,10,15,20];
+var KUIS_TIMES=[{id:10,label:"10 dtk"},{id:15,label:"15 dtk"},{id:20,label:"20 dtk"},{id:30,label:"30 dtk"},{id:0,label:"Tanpa batas"}];
+function vKuis(subject){
+  if(!subjOf(subject)){ location.hash="#/mapel?mode=kuis"; return; }
+  var avail=window.TKAGames.quizItemCount(subject);
+  if(!avail){
+    view.innerHTML='<a href="#/mapel?mode=kuis" class="btn btn-sm">← Pilih Mapel</a>'
+      +'<div class="card pad" style="margin-top:14px;max-width:640px"><h3>Soal kuis belum tersedia</h3>'
+      +'<p class="hint">Bank soal '+esc(window.subjectName(subject))+' belum memiliki pilihan ganda atau benar/salah untuk kuis. Tambahkan lewat Bank Soal atau Import.</p>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#/bank">Kelola Bank Soal</a><a class="btn" href="#/import">Import Soal</a></div></div>';
+    return;
+  }
+  if(!S.quiz || S.quiz.subject!==subject || S.quiz.phase==="setup") renderKuisSetup(subject, avail);
+  else if(S.quiz.phase==="playing") renderKuisQ();
+  else renderKuisDone();
+}
+function kuisSoundBtn(){
+  var on=window.TKASound.on();
+  return '<button class="btn btn-sm" id="qSound" title="Suara">'+(on?"🔊":"🔇")+'</button>';
+}
+function bindKuisSound(){
+  var b=document.getElementById("qSound");
+  if(b) b.onclick=function(e){ e.stopPropagation(); window.TKASound.set(!window.TKASound.on()); b.textContent=window.TKASound.on()?"🔊":"🔇"; if(window.TKASound.on()) window.TKASound.click(); };
+}
+function renderKuisSetup(subject, avail){
+  var s=subjOf(subject);
+  S.quiz=S.quiz||{};
+  S.quiz.subject=subject; S.quiz.phase="setup";
+  S.quiz.count=S.quiz.count||Math.min(10,avail);
+  if(S.quiz.perQ==null) S.quiz.perQ=15;
+  var counts=KUIS_COUNTS.filter(function(c){ return c<=avail; });
+  if(!counts.length) counts=[avail];
+  if(counts.indexOf(S.quiz.count)===-1) S.quiz.count=counts[counts.length-1];
+  view.innerHTML='<a href="#/mapel?mode=kuis" class="btn btn-sm">← Pilih Mapel</a>'
+    +'<div class="card pad quiz-setup" style="margin-top:14px;max-width:640px">'
+    +'<div class="q-meta"><span class="q-num">TEBAK-TEBAKAN</span><span class="badge">'+esc(s.name)+'</span><span style="flex:1"></span>'+kuisSoundBtn()+'</div>'
+    +'<h2 style="margin:6px 0">Kuis '+esc(s.name)+'</h2>'
+    +'<p class="hint">'+avail+' pertanyaan tersedia (pilihan ganda + benar/salah). Jawab satu per satu — +10 poin per jawaban benar, beruntun menambah bonus!</p>'
+    +'<label class="lbl">Jumlah Pertanyaan</label><div class="radio-row" id="kCount">'
+    +counts.map(function(c){ return '<button class="radio-pill'+(c===S.quiz.count?" sel":"")+'" data-c="'+c+'">'+c+'</button>'; }).join("")
+    +'</div><label class="lbl">Timer per Pertanyaan</label><div class="radio-row" id="kTime">'
+    +KUIS_TIMES.map(function(t){ return '<button class="radio-pill'+(t.id===S.quiz.perQ?" sel":"")+'" data-t="'+t.id+'">'+t.label+'</button>'; }).join("")
+    +'</div><div style="margin-top:16px"><button class="btn btn-primary btn-lg" id="kStart">Mulai Main ▶</button></div></div>';
+  bindKuisSound();
+  view.querySelectorAll("#kCount [data-c]").forEach(function(b){
+    b.onclick=function(){ S.quiz.count=+b.getAttribute("data-c"); window.TKASound.click(); renderKuisSetup(subject, avail); };
+  });
+  view.querySelectorAll("#kTime [data-t]").forEach(function(b){
+    b.onclick=function(){ S.quiz.perQ=+b.getAttribute("data-t"); window.TKASound.click(); renderKuisSetup(subject, avail); };
+  });
+  document.getElementById("kStart").onclick=function(){ startKuis(); };
+}
+function startKuis(){
+  var subject=S.quiz.subject;
+  var items=window.TKAGames.quizPickItems(subject, S.quiz.count);
+  if(!items.length){ toast("Soal tidak mencukupi."); return; }
+  S.quiz={ subject:subject, phase:"playing", items:items, idx:0, score:0, streak:0, best:0,
+    correct:0, answers:[], perQ:S.quiz.perQ, qEnd:0, timerId:null, advId:null, token:0,
+    locked:false, startTime:Date.now(), count:items.length };
+  S.leaveGuard={ route:"#/kuis?subject="+subject,
+    message:"Skor kuis yang sedang berjalan akan hilang.",
+    onQuit:function(){ quitKuis(); } };
+  window.TKASound.click();
+  renderKuisQ();
+}
+function quitKuis(){
+  if(S.quiz&&S.quiz.timerId) clearInterval(S.quiz.timerId);
+  if(S.quiz&&S.quiz.advId) clearTimeout(S.quiz.advId);
+  var sub=S.quiz?S.quiz.subject:null;
+  S.quiz=null; S.leaveGuard=null;
+  location.hash=sub? "#/mapel?mode=kuis" : "#/";
+}
+function renderKuisQ(){
+  var Q=S.quiz; if(!Q||Q.phase!=="playing") return;
+  var it=Q.items[Q.idx], total=Q.items.length;
+  Q.locked=false; Q.token++;
+  var myToken=Q.token;
+  if(Q.timerId) clearInterval(Q.timerId);
+  if(Q.advId) clearTimeout(Q.advId);
+  var pct=Math.round(Q.idx/total*100);
+  var timerHtml="";
+  if(Q.perQ>0){
+    Q.qEnd=Date.now()+Q.perQ*1000;
+    timerHtml='<div class="qtime"><div class="qtime-fill" id="qTimeFill" style="width:100%"></div><span id="qTimeTxt">'+Q.perQ+'</span></div>';
+  }
+  var body="";
+  if(it.kind==="mc"){
+    body=it.q.options.map(function(o){
+      return '<button class="quiz-opt" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span></button>';
+    }).join("");
+  } else {
+    body='<div class="quiz-tf"><button class="quiz-opt tf" data-pick="true">BENAR ✓</button>'
+      +'<button class="quiz-opt tf" data-pick="false">SALAH ✕</button></div>'
+      +'<p class="hint">Pernyataan: tentukan Benar atau Salah.</p>';
+  }
+  view.innerHTML='<div class="quiz-top"><a href="#/mapel?mode=kuis" class="btn btn-sm" id="qQuit">✕ Keluar</a>'
+    +'<div class="quiz-score">⭐ <b id="qScore">'+Q.score+'</b>'+(Q.streak>1?' <span class="badge ok">🔥 ×'+Q.streak+'</span>':"")+'</div>'
+    +kuisSoundBtn()+'</div>'
+    +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div>'
+    +'<div class="progress" style="margin:6px 0">Pertanyaan '+(Q.idx+1)+' dari '+total+'</div>'
+    +timerHtml
+    +'<div class="card pad quiz-card" id="qCard"><div class="q-text">'+esc(it.kind==="mc"?it.q.question:it.text)+'</div>'+body
+    +'<div id="qFeed"></div></div>';
+  bindKuisSound();
+  document.getElementById("qQuit").onclick=function(e){
+    e.preventDefault(); confirmLeaveGame();
+  };
+  view.querySelectorAll("[data-pick]").forEach(function(b){
+    b.onclick=function(){ kuisAnswer(b.getAttribute("data-pick"), myToken); };
+  });
+  if(Q.perQ>0){
+    Q.timerId=setInterval(function(){
+      if(!S.quiz||S.quiz.token!==myToken||S.quiz.phase!=="playing"){ clearInterval(Q.timerId); return; }
+      var left=Math.max(0, Q.qEnd-Date.now());
+      var f=document.getElementById("qTimeFill"), t=document.getElementById("qTimeTxt");
+      if(f) f.style.width=(left/(Q.perQ*1000)*100)+"%";
+      if(t) t.textContent=Math.ceil(left/1000);
+      if(left<=0){ clearInterval(Q.timerId); kuisAnswer(null, myToken, true); }
+    },100);
+  }
+}
+function kuisCorrectId(it){
+  if(it.kind==="mc") return (it.q.correctAnswer||[])[0];
+  return it.answer;
+}
+function kuisAnswer(pick, token, timeout){
+  var Q=S.quiz;
+  if(!Q||Q.phase!=="playing"||Q.locked||Q.token!==token) return;
+  Q.locked=true;
+  if(Q.timerId) clearInterval(Q.timerId);
+  var it=Q.items[Q.idx], cid=kuisCorrectId(it);
+  var ok = pick!=null && String(pick)===String(cid);
+  var pts=0;
+  if(ok){
+    Q.streak++; if(Q.streak>Q.best) Q.best=Q.streak;
+    pts=10+Math.min(Q.streak-1,5)*2;
+    Q.score+=pts; Q.correct++;
+    window.TKASound.correct();
+  } else {
+    Q.streak=0;
+    window.TKASound.wrong();
+  }
+  Q.answers.push({ it:it, pick:pick, ok:ok, timeout:!!timeout });
+  // umpan balik visual
+  view.querySelectorAll("[data-pick]").forEach(function(b){
+    var v=b.getAttribute("data-pick");
+    b.disabled=true;
+    if(String(v)===String(cid)) b.classList.add("ok");
+    else if(v===pick) b.classList.add("no");
+    else b.classList.add("dim");
+  });
+  var card=document.getElementById("qCard");
+  if(card) card.classList.add(ok?"pop":"shake");
+  var feed=document.getElementById("qFeed");
+  var rightTxt = it.kind==="mc"
+    ? (function(){ var o=it.q.options.find(function(x){return String(x.id)===String(cid)}); return o? o.id+". "+o.text : cid; })()
+    : (cid==="true"?"Benar":"Salah");
+  if(feed) feed.innerHTML='<div class="'+(ok?"ok-box":"err-box")+'" style="margin-top:12px">'
+    +(ok? "Benar! +"+pts+" poin 🎉" : (timeout? "Waktu habis! ⏰" : "Kurang tepat."))
+    +'<br>Jawaban benar: <b>'+esc(rightTxt)+'</b>'
+    +((it.q.explanation)? '<br><span style="font-size:12px">'+esc(it.q.explanation)+'</span>':"")
+    +'</div><button class="btn btn-primary" id="qNext" style="margin-top:10px">Lanjut →</button>';
+  var nb=document.getElementById("qNext");
+  if(nb) nb.onclick=function(){ kuisNext(); };
+  Q.advId=setTimeout(function(){ kuisNext(token); }, 2600);
+}
+function kuisNext(token){
+  var Q=S.quiz;
+  if(!Q||Q.phase!=="playing") return;
+  if(token!=null && Q.token!==token) return;
+  if(Q.advId) clearTimeout(Q.advId);
+  Q.idx++;
+  if(Q.idx>=Q.items.length) finishKuis();
+  else renderKuisQ();
+}
+function finishKuis(){
+  var Q=S.quiz; if(!Q) return;
+  Q.phase="done";
+  if(Q.timerId) clearInterval(Q.timerId);
+  if(Q.advId) clearTimeout(Q.advId);
+  S.leaveGuard=null;
+  var total=Q.items.length;
+  var nilai=total? Math.round(Q.correct/total*100) : 0;
+  window.TKASound.finish();
+  window.TKAStore.pushHistory({
+    id:"KUIS"+Date.now().toString(36).toUpperCase(), simulationId:"KUIS"+Date.now().toString(36).toUpperCase(),
+    subject:Q.subject, date:Date.now(), total:total, nilai:nilai,
+    correct:Q.correct, wrong:total-Q.correct, empty:0,
+    durationMs:Date.now()-Q.startTime, status:"COMPLETED", finishReason:"COMPLETED", mode:"kuis",
+    totalMs:0, avgSecPerQ:0, budgetSecPerQ:0, questions:[], answers:{}
+  });
+  renderKuisDone();
+}
+function renderKuisDone(){
+  var Q=S.quiz; if(!Q) return;
+  var total=Q.items.length;
+  var nilai=total? Math.round(Q.correct/total*100) : 0;
+  var rows=Q.answers.map(function(a,i){
+    var rightTxt = a.it.kind==="mc"
+      ? (function(){ var o=a.it.q.options.find(function(x){return String(x.id)===String(kuisCorrectId(a.it))}); return o? o.id+". "+o.text : ""; })()
+      : (kuisCorrectId(a.it)==="true"?"Benar":"Salah");
+    var yours = a.pick==null ? "Waktu habis" : (a.it.kind==="mc"
+      ? (function(){ var o=a.it.q.options.find(function(x){return String(x.id)===String(a.pick)}); return o? o.id+". "+o.text : a.pick; })()
+      : (a.pick==="true"?"Benar":"Salah"));
+    return '<div class="card rev-item '+(a.ok?"rev-correct":"rev-wrong")+'"><div class="q-meta"><span class="q-num">'+(i+1)+'</span><span class="badge">'+(a.ok?"✓ Benar":"✕ Salah")+'</span></div>'
+      +'<div style="font-size:14px;margin-bottom:6px">'+esc(a.it.kind==="mc"?a.it.q.question:a.it.text)+'</div>'
+      +'<div style="font-size:13px">Jawabanmu: <b>'+esc(yours)+'</b><br>Benar: <b>'+esc(rightTxt)+'</b></div></div>';
+  }).join("");
+  view.innerHTML='<div class="card result-hero"><div class="q-meta" style="justify-content:center"><span class="q-num">HASIL KUIS</span><span class="badge">'+esc(window.subjectName(Q.subject))+'</span></div>'
+    +'<div class="score-big">⭐ '+Q.score+'</div>'
+    +'<div class="hint">Nilai '+nilai+' • '+Q.correct+'/'+total+' benar • Beruntun terbaik ×'+Q.best+'</div>'
+    +'<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">'
+    +'<button class="btn btn-primary" id="kAgain">Main Lagi ▶</button>'
+    +'<a class="btn" href="#/mapel?mode=kuis">Pilih Mapel</a><a class="btn" href="#/">Beranda</a></div></div>'
+    +'<div class="section-title">Pembahasan Singkat</div>'+rows;
+  document.getElementById("kAgain").onclick=function(){
+    S.quiz={ subject:Q.subject, phase:"setup", count:Math.min(Q.count, window.TKAGames.quizItemCount(Q.subject)), perQ:Q.perQ };
+    renderKuisSetup(Q.subject, window.TKAGames.quizItemCount(Q.subject));
+  };
+}
+
+/* ================= TTS — TEKA-TEKI SILANG ================= */
+function ttsWordList(subject){
+  return (window.BANK_TTS && window.BANK_TTS[subject]) || [];
+}
+function vTTS(subject){
+  if(!subjOf(subject)){ location.hash="#/mapel?mode=tts"; return; }
+  var list=ttsWordList(subject);
+  if(!list.length){
+    view.innerHTML='<a href="#/mapel?mode=tts" class="btn btn-sm">← Pilih Mapel</a>'
+      +'<div class="card pad" style="margin-top:14px;max-width:640px"><h3>TTS belum tersedia</h3>'
+      +'<p class="hint">Mata pelajaran '+esc(window.subjectName(subject))+' belum memiliki data kata TTS. Data TTS terpisah dari bank soal ujian dan sedang disiapkan.</p>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#/bank">Kelola Bank Soal</a><a class="btn" href="#/mapel?mode=tts">Pilih Mapel Lain</a></div></div>';
+    return;
+  }
+  if(!S.tts || S.tts.subject!==subject || S.tts.needNew){
+    var g=window.TKAGames.buildCrossword(list,{maxWords:10});
+    if(!g){
+      view.innerHTML='<div class="card pad">Gagal menyusun TTS. <a class="btn" href="#/mapel?mode=tts">Kembali</a></div>';
+      return;
+    }
+    S.tts={ subject:subject, grid:g, entryIdx:0, vals:{}, locked:{}, wrong:{}, started:true, done:false, needNew:false, focusKey:null };
+  }
+  if(!S.tts.done){
+    S.leaveGuard={ route:"#/tts?subject="+subject,
+      message:"Progres TTS yang sedang dikerjakan akan hilang.",
+      onQuit:function(){ quitTTS(); } };
+  }
+  renderTTS();
+}
+function quitTTS(){
+  S.tts=null; S.leaveGuard=null;
+  location.hash="#/mapel?mode=tts";
+}
+function ttsKey(r,c){ return r+","+c; }
+function ttsActiveEntry(){
+  return S.tts.grid.entries[S.tts.entryIdx];
+}
+function ttsEntriesAt(r,c){
+  return S.tts.grid.entries.map(function(e,i){ return {e:e,i:i}; }).filter(function(x){
+    return x.e.cells.some(function(cell){ return cell.r===r && cell.c===c; });
+  });
+}
+function renderTTS(focusKey){
+  var T=S.tts; if(!T) return;
+  if(focusKey!==undefined) T.focusKey=focusKey;
+  var s=subjOf(T.subject), g=T.grid;
+  var lockedCount=Object.keys(T.locked).length;
+  var pct=g.totalCells? Math.round(lockedCount/g.totalCells*100) : 0;
+  // grid
+  var cells="";
+  for(var r=0;r<g.rows;r++){
+    for(var c=0;c<g.cols;c++){
+      var sol=g.sol[r][c];
+      if(!sol){ cells+='<div class="xw-blank"></div>'; continue; }
+      var k=ttsKey(r,c), v=T.vals[k]||"", num=g.nums[r][c];
+      var cls="xw"+(T.locked[k]?" ok":"")+((T.wrong[k]&&!T.locked[k])?" bad":"");
+      cells+='<div class="xw-cell">'+(num?'<span class="xw-num">'+num+'</span>':"")
+        +'<input class="'+cls+'" data-r="'+r+'" data-c="'+c+'" maxlength="1" value="'+esc(v)+'"'
+        +(T.locked[k]?" disabled":"")+' autocomplete="off" autocapitalize="characters" aria-label="Kotak baris '+(r+1)+' kolom '+(c+1)+'">'
+        +'</div>';
+    }
+  }
+  function clueList(dir, title){
+    var items=g.entries.map(function(e,i){ return {e:e,i:i}; }).filter(function(x){ return x.e.dir===dir; });
+    items.sort(function(a,b){ return a.e.num-b.e.num; });
+    return '<div class="clue-col"><b>'+title+'</b>'+items.map(function(x){
+      var done=x.e.cells.every(function(cell){ return T.locked[ttsKey(cell.r,cell.c)]; });
+      return '<button class="clue'+(x.i===T.entryIdx?" sel":"")+(done?" done":"")+'" data-clue="'+x.i+'"><b>'+x.e.num+'.</b> '+esc(x.e.c)+(done?" ✓":"")+'</button>';
+    }).join("")+'</div>';
+  }
+  var ae=ttsActiveEntry();
+  view.innerHTML='<a href="#/mapel?mode=tts" class="btn btn-sm" id="ttsBack">← Pilih Mapel</a>'
+    +'<div class="section-title">TTS — '+esc(s.name)+'</div>'
+    +'<div class="tts-bar"><div class="progress">Terisi benar: '+lockedCount+'/'+g.totalCells+' ('+pct+'%) • Kata aktif: <b>'+ae.num+' '+(ae.dir==="H"?"Mendatar":"Menurun")+'</b></div>'
+    +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div></div>'
+    +'<div class="two-col"><div class="card pad"><div class="xw-wrap"><div class="xw-grid" style="grid-template-columns:repeat('+g.cols+',var(--xw))">'+cells+'</div></div>'
+    +'<p class="hint">Ketuk kotak/petunjuk untuk memilih kata, lalu ketik hurufnya. Huruf benar terkunci hijau.</p>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
+    +'<button class="btn btn-primary" id="ttsCheck">Periksa Jawaban</button>'
+    +'<button class="btn" id="ttsReset">Ulangi</button>'
+    +'<button class="btn" id="ttsNew">Acak Baru</button>'
+    +'<button class="btn" id="ttsFinish">Selesaikan</button></div></div>'
+    +'<div class="card pad"><div class="clues">'+clueList("H","Mendatar")+clueList("V","Menurun")+'</div></div></div>';
+  paintActiveEntry();
+  // interaksi sel
+  view.querySelectorAll(".xw").forEach(function(inp){
+    inp.addEventListener("focus", function(){ selectCellForInput(inp, false); });
+    inp.addEventListener("click", function(){ selectCellForInput(inp, true); });
+    inp.addEventListener("input", function(){
+      var r=+inp.getAttribute("data-r"), c=+inp.getAttribute("data-c"), k=ttsKey(r,c);
+      var ch=inp.value.toUpperCase().replace(/[^A-Z]/g,"").slice(-1);
+      inp.value=ch; T.vals[k]=ch; delete T.wrong[k]; inp.classList.remove("bad");
+      if(ch) focusNextCell(r,c,1);
+    });
+    inp.addEventListener("keydown", function(e){
+      var r=+inp.getAttribute("data-r"), c=+inp.getAttribute("data-c");
+      if(e.key==="Backspace" && !inp.value){ e.preventDefault(); focusNextCell(r,c,-1); }
+      else if(e.key==="ArrowLeft"){ e.preventDefault(); focusDelta(r,c,0,-1); }
+      else if(e.key==="ArrowRight"){ e.preventDefault(); focusDelta(r,c,0,1); }
+      else if(e.key==="ArrowUp"){ e.preventDefault(); focusDelta(r,c,-1,0); }
+      else if(e.key==="ArrowDown"){ e.preventDefault(); focusDelta(r,c,1,0); }
+    });
+  });
+  view.querySelectorAll("[data-clue]").forEach(function(b){
+    b.onclick=function(){ window.TKASound.click(); T.entryIdx=+b.getAttribute("data-clue"); renderTTS(); focusEntryStart(); };
+  });
+  document.getElementById("ttsCheck").onclick=ttsCheck;
+  document.getElementById("ttsReset").onclick=function(){
+    T.vals={}; T.wrong={}; T.locked={}; renderTTS(); toast("TTS diulang dari awal.");
+  };
+  document.getElementById("ttsNew").onclick=function(){ T.needNew=true; vTTS(T.subject); toast("Susunan TTS baru."); };
+  document.getElementById("ttsFinish").onclick=ttsFinish;
+  document.getElementById("ttsBack").onclick=function(e){
+    // biarkan guard bekerja bila progres ada
+  };
+  if(T.focusKey){
+    var f=view.querySelector('input[data-r="'+T.focusKey.split(",")[0]+'"][data-c="'+T.focusKey.split(",")[1]+'"]');
+    if(f) f.focus();
+  }
+}
+function paintActiveEntry(){
+  var T=S.tts; if(!T) return;
+  var ae=ttsActiveEntry(); if(!ae) return;
+  view.querySelectorAll(".xw").forEach(function(inp){ inp.classList.remove("hl","cur"); });
+  ae.cells.forEach(function(cell){
+    var inp=view.querySelector('input[data-r="'+cell.r+'"][data-c="'+cell.c+'"]');
+    if(inp) inp.classList.add("hl");
+  });
+}
+function selectCellForInput(inp, toggle){
+  var T=S.tts; if(!T) return;
+  var r=+inp.getAttribute("data-r"), c=+inp.getAttribute("data-c");
+  var at=ttsEntriesAt(r,c);
+  if(!at.length) return;
+  var cur=ttsActiveEntry();
+  var inCur=cur.cells.some(function(cell){ return cell.r===r && cell.c===c; });
+  if(toggle && inCur && at.length>1){
+    var other=at.find(function(x){ return x.e.dir!==cur.dir; });
+    if(other){ T.entryIdx=other.i; paintActiveEntry(); refreshClueSel(); return; }
+  }
+  if(!inCur){ T.entryIdx=at[0].i; paintActiveEntry(); refreshClueSel(); }
+  else { paintActiveEntry(); }
+}
+function refreshClueSel(){
+  var T=S.tts; if(!T) return;
+  view.querySelectorAll("[data-clue]").forEach(function(b){
+    b.classList.toggle("sel", +b.getAttribute("data-clue")===T.entryIdx);
+  });
+  var ae=ttsActiveEntry();
+  var bar=view.querySelector(".tts-bar .progress");
+  if(bar&&ae) bar.innerHTML=bar.innerHTML.replace(/Kata aktif: <b>.*?<\/b>/, "Kata aktif: <b>"+ae.num+" "+(ae.dir==="H"?"Mendatar":"Menurun")+"</b>");
+}
+function focusEntryCell(cell){
+  var inp=view.querySelector('input[data-r="'+cell.r+'"][data-c="'+cell.c+'"]');
+  if(inp){ inp.focus(); }
+}
+function focusEntryStart(){
+  var ae=ttsActiveEntry();
+  if(ae&&ae.cells.length) focusEntryCell(ae.cells[0]);
+}
+function focusNextCell(r,c,step){
+  var ae=ttsActiveEntry(); if(!ae) return;
+  var idx=ae.cells.findIndex(function(cell){ return cell.r===r&&cell.c===c; });
+  if(idx===-1) return;
+  var n=ae.cells[idx+step];
+  if(n) focusEntryCell(n);
+}
+function focusDelta(r,c,dr,dc){
+  var inp=view.querySelector('input[data-r="'+(r+dr)+'"][data-c="'+(c+dc)+'"]');
+  if(inp) inp.focus();
+}
+function ttsCheck(){
+  var T=S.tts; if(!T||T.done) return;
+  var g=T.grid, newly=0, wrong=0;
+  for(var r=0;r<g.rows;r++) for(var c=0;c<g.cols;c++){
+    var sol=g.sol[r][c]; if(!sol) continue;
+    var k=ttsKey(r,c), v=(T.vals[k]||"").toUpperCase();
+    if(T.locked[k]) continue;
+    if(v===sol){ T.locked[k]=1; delete T.wrong[k]; newly++; }
+    else if(v){ T.wrong[k]=1; wrong++; }
+  }
+  if(newly) window.TKASound.correct(); else if(wrong) window.TKASound.wrong(); else window.TKASound.click();
+  renderTTS();
+  var lockedCount=Object.keys(T.locked).length;
+  if(lockedCount>=g.totalCells){ ttsFinish(true); }
+  else toast(newly? newly+" huruf benar terkunci." : (wrong? "Belum ada yang tepat — coba lagi." : "Isi dulu kotaknya, lalu periksa."));
+}
+function ttsFinish(auto){
+  var T=S.tts; if(!T||T.done) return;
+  T.done=true; S.leaveGuard=null;
+  var g=T.grid, lockedCount=Object.keys(T.locked).length;
+  var nilai=g.totalCells? Math.round(lockedCount/g.totalCells*100) : 0;
+  window.TKASound.finish();
+  window.TKAStore.pushHistory({
+    id:"TTS"+Date.now().toString(36).toUpperCase(), simulationId:"TTS"+Date.now().toString(36).toUpperCase(),
+    subject:T.subject, date:Date.now(), total:g.entries.length, nilai:nilai,
+    correct:T.grid.entries.filter(function(e){ return e.cells.every(function(cell){ return T.locked[ttsKey(cell.r,cell.c)]; }); }).length,
+    wrong:0, empty:0, durationMs:0, status:"COMPLETED", finishReason:"COMPLETED", mode:"tts",
+    totalMs:0, avgSecPerQ:0, budgetSecPerQ:0, questions:[], answers:{}
+  });
+  modal('<h3>TTS Selesai! 🧩</h3>'
+    +'<div class="score-big" style="font-size:52px">'+nilai+'</div>'
+    +'<p class="hint">'+lockedCount+'/'+g.totalCells+' huruf benar • '+esc(window.subjectName(T.subject))+'</p>'
+    +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'
+    +'<button class="btn btn-primary" id="tAgain">Main Lagi</button>'
+    +'<button class="btn" id="tMapel">Pilih Mapel</button>'
+    +'<button class="btn" id="tHome">Beranda</button></div>');
+  document.getElementById("tAgain").onclick=function(){ closeModal(); T.needNew=true; T.done=false; vTTS(T.subject); };
+  document.getElementById("tMapel").onclick=function(){ closeModal(); S.tts=null; location.hash="#/mapel?mode=tts"; };
+  document.getElementById("tHome").onclick=function(){ closeModal(); S.tts=null; location.hash="#/"; };
+  renderTTS();
 }
 
 /* ================= TAMBAH MANUAL ================= */

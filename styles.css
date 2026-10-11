@@ -229,4 +229,68 @@ pre.ex{background:#f8fafc;border:1px solid var(--line);border-radius:10px;paddin
   pre.ex{font-size:11px}
   /* cegah auto-zoom iOS saat input disentuh */
   select,input[type=text],input[type=number],textarea{font-size:16px}
+  :root{--xw:26px}
+  .xw{font-size:14px}
+  .xw-num{font-size:8px}
+  .clues{grid-template-columns:1fr}
+  .quiz-opt{font-size:14px;padding:12px}
+  .quiz-top{flex-wrap:wrap}
 }
+
+/* ===== Mode belajar (beranda) ===== */
+.grid-modes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mode-card-lg{padding:22px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start;text-align:left}
+.mode-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff}
+.mode-card-lg h3{margin:4px 0 0;font-size:17px}
+.mode-card-lg p{margin:0;color:var(--muted);font-size:13px;line-height:1.6;flex:1}
+.mode-card-lg .btn{margin-top:8px}
+@media(max-width:960px){.grid-modes{grid-template-columns:1fr;max-width:560px}}
+
+/* ===== TTS crossword ===== */
+:root{--xw:clamp(26px,6vw,36px)}
+.tts-bar{margin-bottom:12px}
+.xw-wrap{overflow:auto;padding:4px}
+.xw-grid{display:grid;gap:3px;justify-content:center;min-width:max-content;margin:0 auto}
+.xw-blank{width:var(--xw);height:var(--xw)}
+.xw-cell{position:relative;width:var(--xw);height:var(--xw)}
+.xw{width:100%;height:100%;border:1.5px solid #cbd5e1;border-radius:6px;text-align:center;font-weight:800;font-size:16px;text-transform:uppercase;background:#fff;color:var(--ink);padding:0;font-family:inherit}
+.xw:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+.xw.hl{background:#eff6ff;border-color:#93c5fd}
+.xw.ok{background:var(--green-bg);border-color:var(--green);color:#15803d}
+.xw.bad{background:var(--red-bg);border-color:var(--red)}
+.xw:disabled{opacity:1;cursor:default}
+.xw-num{position:absolute;top:1px;left:3px;font-size:9px;font-weight:700;color:var(--muted);pointer-events:none;z-index:1}
+.clues{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.clue-col{display:flex;flex-direction:column;gap:6px}
+.clue-col>b{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.clue{border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 10px;font-size:13px;text-align:left;cursor:pointer;font-family:inherit;color:var(--ink);line-height:1.5}
+.clue.sel{border-color:var(--accent);background:#eff6ff;box-shadow:0 0 0 1px var(--accent) inset}
+.clue.done{color:var(--muted);text-decoration:line-through}
+
+/* ===== Kuis Tebak-tebakan ===== */
+.quiz-setup .btn-lg{font-size:16px;padding:12px 24px}
+.quiz-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.quiz-score{font-size:16px}
+.q-progress{height:10px;background:#e2e8f0;border-radius:999px;overflow:hidden}
+.q-progress-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s}
+.qtime{position:relative;height:22px;background:#f1f5f9;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin-top:8px}
+.qtime-fill{height:100%;background:linear-gradient(90deg,#22c55e,#eab308,#ef4444);background-size:100% 100%;transition:width .1s linear}
+.qtime span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums}
+.quiz-card{margin-top:12px}
+.quiz-card .q-text{font-size:17px;font-weight:600}
+.quiz-opt{display:flex;gap:12px;align-items:center;width:100%;border:2px solid var(--line);border-radius:12px;padding:14px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit;color:var(--ink);transition:transform .1s,border-color .15s,background .15s;text-align:left}
+.quiz-opt:hover:not(:disabled){border-color:var(--accent);background:#f8fbff;transform:scale(1.01)}
+.quiz-opt .key{width:32px;height:32px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.quiz-opt .txt{flex:1}
+.quiz-opt.ok{border-color:var(--green);background:var(--green-bg);animation:pop .35s}
+.quiz-opt.ok .key{background:var(--green)}
+.quiz-opt.no{border-color:var(--red);background:var(--red-bg);animation:shake .4s}
+.quiz-opt.no .key{background:var(--red)}
+.quiz-opt.dim{opacity:.55}
+.quiz-opt:disabled{cursor:default}
+.quiz-tf{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.quiz-tf .quiz-opt{justify-content:center;font-size:17px}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+.quiz-card.pop{animation:pop .35s}
+.quiz-card.shake{animation:shake .4s}
