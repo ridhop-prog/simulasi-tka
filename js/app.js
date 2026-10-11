@@ -151,6 +151,7 @@ function finishSession(reason, fromFullscreen){
     budgetSecPerQ: sc.total? totalMs/1000/sc.total : 0,
     questions: ses.questions, answers: ses.answers
   };
+  if(ses.blocks) rec.breakdown = window.TKAEngine.scoreBlocks(ses);
   window.TKAStore.pushHistory(rec);
   window.TKAStore.markUsed(ses.subject, ses.questionIds.filter(function(id){ return id.indexOf("@")<0; }));
   window.TKAStore.setActive(null);
@@ -170,7 +171,7 @@ function finishSession(reason, fromFullscreen){
 }
 
 /* ---------- router ---------- */
-var routes = ["dashboard","mapel","setup","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah","tts","kuis"];
+var routes = ["dashboard","mapel","setup","setup-lengkap","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah","tts","kuis"];
 function parseHash(){
   var h=(location.hash||"#/").replace(/^#\/?/,"");
   var parts=h.split("?");
@@ -193,7 +194,7 @@ function render(){
   var r=parseHash(), path=r.path;
   if(typeof closeNavPanel==="function" && path!=="simulasi") closeNavPanel();
   // cegah navigasi tak sengaja dari permainan aktif (ujian / TTS / kuis)
-  if(S.leaveGuard && ["","mapel","setup","instruksi","bank","import","generator","tambah","riwayat","hasil","review"].indexOf(path)!==-1){
+  if(S.leaveGuard && ["","mapel","setup","setup-lengkap","instruksi","bank","import","generator","tambah","riwayat","hasil","review"].indexOf(path)!==-1){
     // kembalikan ke rute permainan + tawarkan konfirmasi keluar
     location.hash=S.leaveGuard.route;
     confirmLeaveGame();
@@ -203,6 +204,7 @@ function render(){
   window.scrollTo(0,0);
   if(path==="" ) return vDashboard();
   if(path==="mapel") return vMapel(r.q.mode);
+  if(path==="setup-lengkap") return vSetupLengkap();
   if(path==="tts") return vTTS(r.q.subject);
   if(path==="kuis") return vKuis(r.q.subject);
   if(path==="setup") return vSetup(r.q.subject);
@@ -296,6 +298,12 @@ function vMapel(mode){
   view.innerHTML='<a href="#/" class="btn btn-sm">← Pilih Mode</a>'
     +'<div class="section-title">Pilih Mata Pelajaran — '+esc(d.title)+'</div>'
     +'<p class="hint" style="margin-top:-6px">'+esc(d.desc)+'</p>'
+    +(mode==="ujian"
+      ? '<div class="card pad lengkap-card" style="margin-bottom:14px"><div class="subj-top"><span class="subj-icon" style="background:#0f172a">5in1</span>'
+        +'<div><h3>TKA Lengkap — Semua Mapel Berurutan</h3><div style="font-size:12px;color:var(--muted)">Matematika → B. Indonesia → B. Inggris → Produktif → PKWU dalam satu sesi</div></div></div>'
+        +'<p>Ujian seperti TKA sebenarnya: 5 bagian berurutan, satu timer total, nilai per mapel + nilai gabungan.</p>'
+        +'<a class="btn btn-primary" href="#/setup-lengkap">Atur TKA Lengkap</a></div>'
+      : "")
     +'<div class="grid-subjects">'+cards+'</div>';
 }
 function histItem(h){
@@ -304,6 +312,59 @@ function histItem(h){
   return '<div class="card hist-item"><div class="hist-score '+cls+'">'+h.nilai+'</div>'
     +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' benar • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+' • '+esc(window.historyModeLabel(h.mode||"normal"))+'</div></div>'
     +st+'</div>';
+}
+
+/* ================= SETUP TKA LENGKAP (5 mapel berurutan) ================= */
+var LENGKAP_COUNTS=[5,10,15];
+function vSetupLengkap(){
+  var settings=window.TKAStore.getSettings();
+  var selCount=(S.pendingSetup&&S.pendingSetup.lengkap)?S.pendingSetup.count:10;
+  var selMode=(S.pendingSetup&&S.pendingSetup.lengkap&&window.TKA_TIME.modes[S.pendingSetup.mode])
+    ? S.pendingSetup.mode : (settings.lastMode||window.TKA_TIME.defaultMode);
+  function blockMin(sub){ return window.recommendedMinutes(sub, selCount, selMode); }
+  var totalMin=window.LENGKAP_ORDER.reduce(function(a,s){return a+blockMin(s);},0);
+  var pills=LENGKAP_COUNTS.map(function(c){
+    return '<button class="radio-pill'+(c===selCount?" sel":"")+'" data-count="'+c+'">'+c+' /mapel</button>';
+  }).join("");
+  var modeCards=Object.keys(window.TKA_TIME.modes).map(function(m){
+    var md=window.TKA_TIME.modes[m];
+    var tm=window.LENGKAP_ORDER.reduce(function(a,s){return a+window.recommendedMinutes(s,selCount,m);},0);
+    return '<button class="mode-card'+(m===selMode?" sel":"")+'" data-mode="'+m+'">'
+      +'<b>Mode '+md.label+'</b><span class="mode-time">'+tm+' mnt total</span>'
+      +'<span class="hint">'+esc(md.desc)+'</span></button>';
+  }).join("");
+  var rows=window.LENGKAP_ORDER.map(function(sid,i){
+    var s=subjOf(sid), avail=window.TKAStore.getBank(sid).length+(window.dynamicCap?window.dynamicCap(sid):0);
+    var use=Math.min(selCount,avail);
+    return '<tr><td>'+(i+1)+'. '+esc(s.name)+'</td><td>'+use+' soal</td><td>'+blockMin(sid)+' mnt</td></tr>';
+  }).join("");
+  view.innerHTML='<a href="#/mapel?mode=ujian" class="btn btn-sm">← Pilih Mapel</a>'
+    +'<div class="section-title">TKA Lengkap — 5 Mapel Berurutan</div>'
+    +'<div class="two-col"><div class="card pad">'
+    +'<label class="lbl">Jumlah Soal per Mapel</label><div class="radio-row" id="lcCount">'+pills+'</div>'
+    +'<label class="lbl">Mode Waktu</label><div class="mode-grid" id="lcMode">'+modeCards+'</div>'
+    +'<table class="mini"><tr><th>Bagian</th><th>Soal</th><th>Waktu</th></tr>'+rows
+    +'<tr><th>Total</th><th>'+(selCount*5)+' soal</th><th>'+totalMin+' mnt</th></tr></table>'
+    +'<p class="hint">Satu timer total untuk semua bagian. Bebas pindah soal antar-bagian lewat Daftar Soal. Tiap bagian dinilai terpisah + nilai gabungan.</p>'
+    +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" id="lcGo">Lanjut ke Persiapan →</button></div>'
+    +'</div><div class="card pad"><b>Alur TKA Lengkap</b><p class="hint">Matematika → Bahasa Indonesia → Bahasa Inggris → Produktif → PKWU dalam satu sesi fullscreen. Di soal terakhir tiap bagian ada tombol “Lanjut” ke mapel berikutnya.</p></div></div>';
+  var curCount=selCount, curMode=selMode;
+  function refresh(){
+    S.pendingSetup={lengkap:true,count:curCount,mode:curMode};
+    vSetupLengkap();
+  }
+  document.querySelectorAll("#lcCount [data-count]").forEach(function(b){
+    b.onclick=function(){ curCount=+b.getAttribute("data-count"); refresh(); };
+  });
+  document.querySelectorAll("#lcMode [data-mode]").forEach(function(b){
+    b.onclick=function(){ curMode=b.getAttribute("data-mode"); refresh(); };
+  });
+  document.getElementById("lcGo").onclick=function(){
+    var mins=window.LENGKAP_ORDER.reduce(function(a,s){return a+window.recommendedMinutes(s,curCount,curMode);},0);
+    S.pendingSetup={lengkap:true,count:curCount,mode:curMode,minutes:mins};
+    var st=window.TKAStore.getSettings(); st.lastMode=curMode; window.TKAStore.saveSettings(st);
+    location.hash="#/instruksi";
+  };
 }
 
 /* ================= SETUP ================= */
@@ -396,6 +457,7 @@ function vSetup(subjectId){
 /* ================= PERSIAPAN (ringkasan sebelum simulasi) ================= */
 function vInstruksi(){
   if(!S.pendingSetup){ location.hash="#/"; return; }
+  if(S.pendingSetup.lengkap) return vInstruksiLengkap();
   var p=S.pendingSetup, s=subjOf(p.subject);
   var mode=p.mode&&window.TKA_TIME.modes[p.mode]?p.mode:window.TKA_TIME.defaultMode;
   p.mode=mode;
@@ -429,9 +491,41 @@ function vInstruksi(){
   ag.onchange=function(){bb.disabled=!ag.checked};
   bb.onclick=function(){ beginSimulation(); };
 }
+/* ---- Persiapan TKA Lengkap: ringkasan 5 bagian ---- */
+function vInstruksiLengkap(){
+  var p=S.pendingSetup;
+  var mode=p.mode&&window.TKA_TIME.modes[p.mode]?p.mode:window.TKA_TIME.defaultMode;
+  p.mode=mode;
+  var md=window.TKA_TIME.modes[mode];
+  var rows=window.LENGKAP_ORDER.map(function(sid,i){
+    var avail=window.TKAStore.getBank(sid).length+(window.dynamicCap?window.dynamicCap(sid):0);
+    var use=Math.min(p.count,avail);
+    return '<tr><td>'+(i+1)+'. '+esc(window.subjectName(sid))+'</td><td>'+use+' soal</td><td>'+window.recommendedMinutes(sid,p.count,mode)+' mnt</td></tr>';
+  }).join("");
+  var avgSec=Math.round(p.minutes*60/(p.count*5));
+  view.innerHTML='<a href="#/setup-lengkap" class="btn btn-sm">← Pengaturan</a>'
+    +'<div class="card pad" style="margin-top:14px;max-width:760px">'
+    +'<div class="q-meta"><span class="q-num">PERSIAPAN SIMULASI</span><span class="badge">TKA Lengkap</span><span class="badge">Mode '+esc(md.label)+'</span></div>'
+    +'<h2 style="margin:6px 0">TKA Lengkap — 5 Mapel Berurutan</h2>'
+    +'<table class="mini"><tr><th>Bagian</th><th>Soal</th><th>Waktu</th></tr>'+rows
+    +'<tr><th>Total</th><th>'+(p.count*5)+' soal</th><th>'+p.minutes+' menit ('+fmtTime(p.minutes*60*1000)+')</th></tr></table>'
+    +'<table class="mini"><tr><th>Rata-rata per Soal</th><td>'+fmtAvgSec(avgSec)+'</td></tr>'
+    +'<tr><th>Tipe soal</th><td>Pilihan ganda • Kompleks • Benar/Salah</td></tr></table>'
+    +'<div class="warn-box" style="margin-top:12px">Satu timer total <b>terus berjalan</b> lintas 5 bagian — termasuk saat pindah soal, membuka Daftar Soal, atau pindah mapel. Di soal terakhir tiap bagian ada tombol “Lanjut” ke mapel berikutnya.</div>'
+    +'<ol style="font-size:14px;line-height:1.8;color:#334155"><li>Jawaban tersimpan otomatis dan boleh diubah kapan saja sebelum simulasi selesai.</li>'
+    +'<li>Nomor <b>[ ]</b>=belum dijawab, <b>[✓]</b>=sudah dijawab, <b>[★]</b>=ditandai.</li>'
+    +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
+    +'<li>Klik <b>Selesai</b> di soal terakhir bagian 5 bila yakin. Waktu habis juga otomatis selesai.</li></ol>'
+    +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami instruksi dan siap masuk mode fullscreen untuk memulai simulasi.</label>'
+    +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" id="beginBtn" disabled>Mulai Simulasi</button></div></div>';
+  var ag=document.getElementById("agree"), bb=document.getElementById("beginBtn");
+  ag.onchange=function(){bb.disabled=!ag.checked};
+  bb.onclick=function(){ beginSimulation(); };
+}
 function beginSimulation(){
   var p=S.pendingSetup;
   if(!p) return;
+  if(p.lengkap) return beginSimulationLengkap();
   var built=window.TKAEngine.buildSession(p.subject, p.count);
   if(built.error){ toast(built.error); return; }
   var ses=built.session;
@@ -448,6 +542,36 @@ function beginSimulation(){
   persistActive();
   history.pushState(null,"",location.href);
   // masuk fullscreen (resmi, aman) lalu ke halaman simulasi
+  window.TKAEngine.enterFullscreen().then(function(){
+    S.fullscreenExpected = !!document.fullscreenElement;
+    if(!S.fullscreenExpected) toast("Fullscreen tidak diizinkan browser — simulasi tetap berjalan.");
+    location.hash="#/simulasi";
+  }).catch(function(){
+    S.fullscreenExpected=false;
+    location.hash="#/simulasi";
+  });
+  setTimeout(function(){ if(S.session&&location.hash!=="#/simulasi") location.hash="#/simulasi"; },800);
+}
+
+function beginSimulationLengkap(){
+  var p=S.pendingSetup;
+  var specs=window.LENGKAP_ORDER.map(function(sid){ return {subject:sid, count:p.count}; });
+  // Bangun 5 blok mapel sekaligus; pesan error menyebut mapel yang bermasalah
+  var built=window.TKAEngine.buildSessionLengkap(specs);
+  if(built.error){ toast(built.error); return; }
+  var ses=built.session;
+  ses.durationMs=p.minutes*60*1000;
+  ses.totalMs=ses.durationMs;
+  ses.mode=(p.mode&&window.TKA_TIME.modes[p.mode])?p.mode:window.TKA_TIME.defaultMode;
+  ses.oneMinNotified=false;
+  ses.endTime=Date.now()+ses.durationMs;
+  ses.requestedCount=p.count;
+  S.session=ses;
+  S.leaveGuard={ route:"#/simulasi",
+    message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
+    onQuit:function(){ finishSession("COMPLETED"); } };
+  persistActive();
+  history.pushState(null,"",location.href);
   window.TKAEngine.enterFullscreen().then(function(){
     S.fullscreenExpected = !!document.fullscreenElement;
     if(!S.fullscreenExpected) toast("Fullscreen tidak diizinkan browser — simulasi tetap berjalan.");
@@ -516,9 +640,18 @@ function renderSim(){
   }
 
   var isLast = (idx === total - 1);
-  var bottomBtn = isLast
-    ? '<span class="spacer"></span><button class="btn btn-primary" id="btnFinish">Selesai</button>'
-    : '<span class="spacer"></span><button class="btn btn-primary" id="btnNext">Soal Berikutnya →</button>';
+  var blk = window.TKAEngine.blockOf(ses, idx);
+  var isBlockLast = (idx === blk.start + blk.count - 1);
+  var qNo = idx - blk.start + 1; // nomor dalam blok/mapel
+  var bottomBtn;
+  if(isLast){
+    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnFinish">Selesai</button>';
+  } else if(ses.blocks && isBlockLast){
+    var nextSubj = window.TKAEngine.blockOf(ses, idx+1).subject;
+    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnNextBlock">Lanjut: '+esc(window.subjectName(nextSubj))+' →</button>';
+  } else {
+    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnNext">Soal Berikutnya →</button>';
+  }
 
   closeNavPanel();
   var totalMs=ses.totalMs||ses.durationMs||1;
@@ -527,14 +660,18 @@ function renderSim(){
   var elapsedMs=Math.max(0, totalMs-remain);
   var avgPace=answeredCount? fmtAvgSec(elapsedMs/1000/answeredCount)+" /soal" : "—";
   var budgetPace=fmtAvgSec(totalMs/1000/(total||1))+" /soal";
+  var subjLabel = esc(window.subjectName(blk.subject));
+  var blockLabel = ses.blocks
+    ? 'Bagian '+(blk.i+1)+'/'+ses.blocks.length+' • '+subjLabel
+    : 'SIMULASI TKA • '+subjLabel;
   view.innerHTML=
-    '<div class="sim-header"><div><div class="subj">SIMULASI TKA • '+esc(s.name)+'</div>'
-    +'<div class="progress">Soal '+(idx+1)+' dari '+total+' • Sudah dijawab: '+answeredCount+'/'+total+'</div>'
+    '<div class="sim-header"><div><div class="subj">'+blockLabel+'</div>'
+    +'<div class="progress">Soal '+qNo+' dari '+blk.count+' • Sudah dijawab: '+answeredCount+'/'+total+'</div>'
     +'<div class="pace">Mode '+esc(window.timeModeLabel(ses.mode))+' • Rata-rata: <b>'+avgPace+'</b> • Target ≤ '+budgetPace+'</div></div>'
     +'<div class="sim-header-actions"><button class="btn btn-sm btn-list" id="btnList">☰ Daftar Soal</button>'
     +'<div class="timer-box"><div class="timer-label">WAKTU TERSISA</div><div class="timer'+timerCls+'" id="simTimer">'+fmtTime(remain)+'</div></div></div></div>'
     +'<div class="sim-single"><div class="card q-card">'
-    +'<div class="q-meta"><span class="q-num">SOAL '+(idx+1)+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+esc(diffLabel(q.difficulty))+'</span>'
+    +'<div class="q-meta"><span class="q-num">SOAL '+qNo+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+esc(diffLabel(q.difficulty))+'</span>'
     +(qMarked(q.id)?'<span class="badge warn">★ Ditandai</span>':"")+'</div>'
     +'<div class="q-text">'+esc(q.question)+'</div>'
     + body
@@ -575,6 +712,14 @@ function renderSim(){
   if(nx) nx.onclick=function(){
     if(S.session.currentIndex<S.session.questions.length-1){S.session.currentIndex++; persistActive(); renderSim();}
   };
+  var nxb=document.getElementById("btnNextBlock");
+  if(nxb) nxb.onclick=function(){
+    if(S.session.currentIndex<S.session.questions.length-1){
+      S.session.currentIndex++; persistActive(); renderSim();
+      var nb=window.TKAEngine.blockOf(S.session, S.session.currentIndex);
+      toast("Bagian "+(nb.i+1)+": "+window.subjectName(nb.subject));
+    }
+  };
   document.getElementById("btnMark").onclick=function(){
     var id=q.id, m=S.session.marked;
     if(m.indexOf(id)!==-1) S.session.marked=m.filter(function(x){return x!==id});
@@ -585,10 +730,17 @@ function renderSim(){
   if(fin) fin.onclick=function(){ confirmFinish(); };
 }
 /* ---------- Panel Daftar Soal (overlay; timer & session tidak disentuh) ---------- */
-function navBoxLabel(x, i){
+function navBoxLabel(x, i, dispNo){
   var answered=qAnswered(x), marked=qMarked(x.id);
   var mark = marked && answered ? "✓★" : marked ? "★" : answered ? "✓" : "";
-  return (mark ? '<span class="mi">'+mark+'</span>' : "") + (i+1);
+  return (mark ? '<span class="mi">'+mark+'</span>' : "") + (dispNo!=null?dispNo:(i+1));
+}
+function navNumBtn(x, globalIdx, labelNo, subjName){
+  var cls="num";
+  if(globalIdx===S.session.currentIndex) cls+=" cur";
+  if(qAnswered(x)) cls+=" answered";
+  if(qMarked(x.id)) cls+=" marked";
+  return '<button class="'+cls+'" data-navjump="'+globalIdx+'" aria-label="Soal '+labelNo+(subjName?" "+subjName:"")+'">'+navBoxLabel(x,globalIdx,labelNo)+'</button>';
 }
 function openNavPanel(){
   if(!S.session || S.session.status!=="RUNNING") return;
@@ -596,20 +748,30 @@ function openNavPanel(){
   S.navPanelOpen=true;
   var ses=S.session, idx=ses.currentIndex, total=ses.questions.length;
   var answeredCount=ses.questions.filter(function(x){return qAnswered(x)}).length;
-  var grid=ses.questions.map(function(x,i){
-    var cls="num";
-    if(i===idx) cls+=" cur";
-    if(qAnswered(x)) cls+=" answered";
-    if(qMarked(x.id)) cls+=" marked";
-    return '<button class="'+cls+'" data-navjump="'+i+'" aria-label="Soal '+(i+1)+'">'+navBoxLabel(x,i)+'</button>';
-  }).join("");
+  var gridHtml="";
+  if(ses.blocks){
+    // Kelompok per mapel agar bebas loncat antar-bagian
+    gridHtml=ses.blocks.map(function(b, bi){
+      var start=ses.blockStarts[bi];
+      var nums=b.questions.map(function(x,k){
+        return navNumBtn(x, start+k, k+1, window.subjectName(b.subject));
+      }).join("");
+      var ansB=b.questions.filter(function(x){return qAnswered(x)}).length;
+      return '<div class="navblock"><div class="navblock-head"><b>'+(bi+1)+'. '+esc(window.subjectName(b.subject))+'</b><span>'+ansB+'/'+b.questions.length+'</span></div>'
+        +'<div class="num-grid">'+nums+'</div></div>';
+    }).join("");
+  } else {
+    gridHtml='<div class="num-grid">'+ses.questions.map(function(x,i){
+      return navNumBtn(x, i, i+1, null);
+    }).join("")+'</div>';
+  }
   var ov=document.createElement("div");
   ov.className="navpanel-back"; ov.id="navPanel";
   ov.innerHTML='<div class="navpanel" role="dialog" aria-label="Daftar Soal">'
     +'<div class="navpanel-head"><b>DAFTAR SOAL</b><span class="badge">'+esc(window.subjectName(ses.subject))+'</span>'
     +'<span style="flex:1"></span><button class="btn btn-sm" id="navClose">Tutup</button></div>'
     +'<div class="navpanel-sub">Sudah dijawab '+answeredCount+'/'+total+' • Ditandai '+ses.marked.length+' • Klik nomor untuk pindah (panel tertutup otomatis).</div>'
-    +'<div class="navpanel-grid"><div class="num-grid">'+grid+'</div>'
+    +'<div class="navpanel-grid">'+gridHtml
     +'<div class="legend"><span><i class="dot" style="background:#f1f5f9;border:1px solid #cbd5e1"></i>Belum</span><span><span style="font-weight:800">✓</span> Sudah</span><span><span style="font-weight:800">★</span> Ditandai</span><span><i class="dot" style="background:#fff;border:2px solid var(--accent)"></i>Aktif</span></div></div>'
     +'<div class="navpanel-foot"><button class="btn btn-primary" id="navDone" style="flex:1">Tutup</button>'
     +'<button class="btn btn-sm" id="navExitFs" title="Keluar fullscreen untuk menguji deteksi">Uji: Keluar Fullscreen</button></div></div>';
@@ -715,7 +877,11 @@ function vHasil(){
     +'<table class="mini"><tr><th>Jumlah soal</th><td>'+r.total+'</td></tr><tr><th>Persentase</th><td>'+r.nilai+'%</td></tr><tr><th>Waktu pengerjaan</th><td>'+esc(fmtDur(r.durationMs))+' • '+fmtDate(r.date)+'</td></tr><tr><th>Rata-rata waktu per soal</th><td>'+esc(avgTxt)+' (target ≤ '+esc(budgetTxt)+')</td></tr><tr><th>Soal terjawab</th><td>'+answeredN+'/'+r.total+'</td></tr><tr><th>Mode yang digunakan</th><td>'+esc(modeLbl)+'</td></tr><tr><th>Alasan selesai</th><td>'+reasonId+'</td></tr><tr><th>Status</th><td>'+esc(r.status)+'</td></tr></table>'
     +evalHtml
     +'<table class="mini"><tr><th>Tipe soal</th><th>Benar/Total</th></tr>'+typeRows+'</table>'
-    +'<div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap"><a class="btn btn-primary" href="#/review?id='+r.id+'">Lihat Pembahasan</a><a class="btn" href="#/">Kembali ke Menu</a><a class="btn" href="#/setup?subject='+r.subject+'">Simulasi Lagi (Soal Baru)</a></div></div>';
+    +(r.breakdown? '<table class="mini"><tr><th>Bagian</th><th>Benar</th><th>Nilai</th></tr>'
+      +r.breakdown.map(function(b,i){
+        return '<tr><td>'+(i+1)+'. '+esc(window.subjectName(b.subject))+'</td><td>'+b.correct+'/'+b.total+'</td><td><b>'+b.nilai+'</b></td></tr>';
+      }).join("")+'</table>' : "")
+    +'<div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap"><a class="btn btn-primary" href="#/review?id='+r.id+'">Lihat Pembahasan</a><a class="btn" href="#/">Kembali ke Menu</a><a class="btn" href="'+(r.subject==="lengkap"?"#/setup-lengkap":"#/setup?subject="+r.subject)+'">Simulasi Lagi (Soal Baru)</a></div></div>';
 }
 
 /* ================= REVIEW ================= */
@@ -723,7 +889,7 @@ function vReview(id){
   var r=S.lastResult && (!id || S.lastResult.id===id) ? S.lastResult : window.TKAStore.getHistory().find(function(h){return h.id===id});
   if(!r){ var h=window.TKAStore.getHistory(); r=h[0]; }
   if(!r){ view.innerHTML='<div class="card pad">Belum ada data review.</div>'; return; }
-  var items=r.questions.map(function(q,i){
+  function reviewItem(q, no){
     var ans=r.answers[q.id];
     var ok=window.TKAEngine.isCorrect(q,ans);
     var emp=!window.TKAEngine.isAnswered(q,ans);
@@ -751,11 +917,25 @@ function vReview(id){
       userHtml='<div><b>Jawaban Anda:</b> '+esc(txt(Array.isArray(ans)?ans:[]))+'</div>';
       kunciHtml='<div><b>Jawaban Benar:</b> '+esc(txt(q.correctAnswer))+'</div>';
     }
-    return '<div class="card rev-item '+cls+'"><div class="q-meta"><span class="q-num">SOAL '+(i+1)+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+status+'</span></div>'
+    return '<div class="card rev-item '+cls+'"><div class="q-meta"><span class="q-num">SOAL '+no+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+status+'</span></div>'
       +'<div style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px">'+esc(q.question)+'</div>'
       +'<div style="font-size:13px;line-height:1.7">'+userHtml+kunciHtml
       +(q.explanation?'<div style="margin-top:6px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px"><b>Pembahasan:</b> '+esc(q.explanation)+'</div>':"")
       +'</div></div>';
+  }
+  // Kelompokkan per mapel untuk TKA Lengkap
+  var groups;
+  if(r.subject==="lengkap" && r.breakdown){
+    groups=r.breakdown.map(function(b){
+      return { title:window.subjectName(b.subject),
+               qs:r.questions.filter(function(q){return q.subject===b.subject;}) };
+    });
+  } else {
+    groups=[{title:null, qs:r.questions}];
+  }
+  var items=groups.map(function(g){
+    var list=g.qs.map(function(q,k){ return reviewItem(q,k+1); }).join("");
+    return (g.title? '<div class="section-title" style="margin-top:18px">'+esc(g.title)+'</div>' : "") + list;
   }).join("");
   view.innerHTML='<a href="#/hasil" class="btn btn-sm">← Hasil</a> <a href="#/" class="btn btn-sm">Beranda</a>'
     +'<div class="section-title">Pembahasan — '+esc(window.subjectName(r.subject))+' (Nilai '+r.nilai+')</div>'+items;

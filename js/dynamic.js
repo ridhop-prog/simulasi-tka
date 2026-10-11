@@ -22,6 +22,7 @@ function shuf(rng, arr){
 }
 function fmt(n){ return Number(n).toLocaleString("id-ID"); }
 function nonce(rng){ return Math.floor(rng()*46656).toString(36); }
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a||1; }
 // pengecoh numerik di sekitar jawaban (unik, tidak sama dengan jawaban)
 function distract(rng, ans, spreads){
   var out = [], seen = {};
@@ -298,8 +299,8 @@ T("RPLV02","produktif","Perulangan","medium",function(rng){
     "i = 0, "+s+", … < "+n+" → "+ans+" iterasi.","medium");
 }),
 T("RPLV03","produktif","Array","easy",function(rng){
-  var len=ri(rng,6,8), arr=[], i;
-  for(i=0;i<len;i++) arr.push(ri(rng,10,99));
+  var len=ri(rng,6,8), arr=[], i, guard=0;
+  while(arr.length<len&&guard++<300){ var v=ri(rng,10,99); if(arr.indexOf(v)===-1) arr.push(v); }
   var k=ri(rng,0,len-1), ans=arr[k];
   var pool=arr.filter(function(v){return v!==ans;});
   return mcQ("produktif","Array","Diketahui arr = ["+arr.join(", ")+"]. Nilai arr["+k+"] adalah …",
@@ -308,17 +309,34 @@ T("RPLV03","produktif","Array","easy",function(rng){
 })
 ];
 
-var DYNAMIC_CAP = { matematika:12, pkwu:4, produktif:3, bindo:0, binggris:0 };
+var DYNAMIC_CAP = { matematika:12, pkwu:6, produktif:5, bindo:5, binggris:6 };
+window.DYNAMIC_CAP = DYNAMIC_CAP;
 window.DYNAMIC_TPL = TPL;
-window.dynamicCap = function(subject){ return DYNAMIC_CAP[subject]||0; };
+// Helper bersama agar file template lain (dynamic2.js) konsisten
+window.DynH = { rngFn:rngFn, ri:ri, pick:pick, shuf:shuf, fmt:fmt, nonce:nonce,
+  gcd:gcd, distract:distract, distractStr:distractStr, mcQ:mcQ, coef:coef, T:T };
+window.dynamicCap = function(subject){ return window.DYNAMIC_CAP[subject]||0; };
 window.instantiateDynamics = function(subject, n){
   var rng = rngFn();
-  var pool = shuf(rng, TPL.filter(function(t){ return t.subject===subject; }));
-  return pool.slice(0, Math.max(0,Math.min(n, pool.length))).map(function(t){
+  var allTpl = window.DYNAMIC_TPL || TPL;
+  var pool = allTpl.filter(function(t){ return t.subject===subject; });
+  // Rotasi anti-ulang: utamakan template yang belum dipakai sesi-sesi terakhir
+  var used = [], usedSet = {};
+  try{ used = (window.TKAStore && window.TKAStore.getUsedDyn(subject)) || []; }catch(e){}
+  used.forEach(function(id){ usedSet[id]=1; });
+  var fresh = pool.filter(function(t){ return !usedSet[t.id]; });
+  var src = fresh.length>=Math.min(n,pool.length) ? fresh : pool.slice();
+  if(fresh.length>0 && fresh.length<pool.length && fresh.length<n){
+    // campur agar tetap bervariasi bila fresh kurang
+    var rest = shuf(rng, pool.filter(function(t){ return usedSet[t.id]; }));
+    src = fresh.concat(rest);
+  }
+  return shuf(rng, src).slice(0, Math.max(0,Math.min(n, pool.length))).map(function(t){
     var q = t.make(rngFn());
     q.id = t.id + "@" + nonce(rng);
     q.difficulty = t.difficulty;
     q.subject = subject;
+    q.tplId = t.id;
     return q;
   });
 };

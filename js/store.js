@@ -102,6 +102,24 @@
     write(LS.USED,u);
   }
 
+  // Template dinamis yang sudah dipakai sesi-sesi terakhir (rotasi anti-ulang)
+  var DYN = "tka_used_dyn";
+  function getUsedDyn(subject){
+    var u = read(DYN, {});
+    return subject ? (u[subject]||[]) : u;
+  }
+  function markUsedDyn(subject, tplIds){
+    var u = read(DYN, {});
+    u[subject] = (u[subject]||[]).concat(tplIds);
+    if(u[subject].length>40) u[subject]=u[subject].slice(-40);
+    write(DYN, u);
+  }
+  function resetUsedDyn(subject){
+    var u = read(DYN, {});
+    if(subject){ delete u[subject]; } else { u={}; }
+    write(DYN, u);
+  }
+
   function getActive(){ return read(LS.ACTIVE, null); }
   function setActive(s){ if(s) write(LS.ACTIVE,s); else localStorage.removeItem(LS.ACTIVE); }
 
@@ -126,6 +144,7 @@
     getCustom:getCustom,
     getHistory:getHistory, pushHistory:pushHistory, clearHistory:clearHistory, deleteHistory:deleteHistory,
     getUsed:getUsed, markUsed:markUsed, resetUsed:resetUsed,
+    getUsedDyn:getUsedDyn, markUsedDyn:markUsedDyn, resetUsedDyn:resetUsedDyn,
     getActive:getActive, setActive:setActive,
     getSettings:getSettings, saveSettings:saveSettings
   };

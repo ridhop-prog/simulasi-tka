@@ -24,9 +24,12 @@ window.TKA_CONFIG = {
   }
 };
 window.subjectName = function(id){
+  if(id==="lengkap") return "TKA Lengkap";
   var s = (window.TKA_CONFIG.subjects||[]).find(function(x){return x.id===id});
   return s ? s.name : id;
 };
+// Urutan blok resmi mode TKA Lengkap
+window.LENGKAP_ORDER = ["matematika","bindo","binggris","produktif","pkwu"];
 
 /* ===== Sistem Waktu Tantangan TKA — SATU konfigurasi terpusat =====
    Angka preset adalah alokasi LATIHAN (bukan klaim alokasi resmi TKA).
