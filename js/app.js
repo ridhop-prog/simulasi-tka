@@ -152,7 +152,7 @@ function finishSession(reason, fromFullscreen){
     questions: ses.questions, answers: ses.answers
   };
   window.TKAStore.pushHistory(rec);
-  window.TKAStore.markUsed(ses.subject, ses.questionIds);
+  window.TKAStore.markUsed(ses.subject, ses.questionIds.filter(function(id){ return id.indexOf("@")<0; }));
   window.TKAStore.setActive(null);
   S.lastResult=rec;
   S.fullscreenExpected=false;
@@ -316,7 +316,8 @@ function vSetup(subjectId){
   var selCount = S.pendingSetup&&S.pendingSetup.subject===s.id ? S.pendingSetup.count : window.TKA_CONFIG.defaultCount;
   var selMode = S.pendingSetup&&S.pendingSetup.subject===s.id && window.TKA_TIME.modes[S.pendingSetup.mode]
     ? S.pendingSetup.mode : (settings.lastMode||window.TKA_TIME.defaultMode);
-  var effCount = Math.min(selCount, bankN||selCount);
+  var dynCap0 = window.dynamicCap ? window.dynamicCap(s.id) : 0;
+  var effCount = Math.min(selCount, (bankN+dynCap0)||selCount);
   var suggested = window.recommendedMinutes(s.id, effCount||selCount, selMode);
   var selMin = S.pendingSetup&&S.pendingSetup.subject===s.id ? S.pendingSetup.minutes : suggested;
   var pills=counts.map(function(c){
@@ -333,9 +334,12 @@ function vSetup(subjectId){
   var comp={easy:0,medium:0,hard:0};
   bank.forEach(function(q){ if(comp[q.difficulty]!=null) comp[q.difficulty]++; });
   var avgSec = effCount? Math.round(selMin*60/effCount) : 0;
-  var warn = bankN<selCount
-    ? '<div class="warn-box" style="margin-top:12px">Bank soal '+esc(s.name)+' hanya memiliki <b>'+bankN+'</b> soal, sedangkan kamu memilih <b>'+selCount+'</b> soal. Simulasi akan menggunakan <b>'+bankN+'</b> soal tanpa duplikasi; saran waktu dihitung dari '+bankN+' soal aktual.</div>'
-    : '<div class="ok-box" style="margin-top:12px">Bank soal mencukupi: <b>'+bankN+'</b> soal tersedia.</div>';
+  var dynCap = window.dynamicCap ? window.dynamicCap(s.id) : 0;
+  var totalAvail = bankN + dynCap;
+  var dynNote = dynCap? ' Termasuk <b>±'+dynCap+' soal angka-acak</b> yang angkanya selalu berbeda di tiap simulasi.' : '';
+  var warn = totalAvail<selCount
+    ? '<div class="warn-box" style="margin-top:12px">Bank soal '+esc(s.name)+' memiliki <b>'+bankN+'</b> soal + <b>'+dynCap+'</b> angka-acak, sedangkan kamu memilih <b>'+selCount+'</b> soal. Simulasi akan menggunakan <b>'+totalAvail+'</b> soal tanpa duplikasi; saran waktu dihitung dari '+totalAvail+' soal aktual.</div>'
+    : '<div class="ok-box" style="margin-top:12px">Bank soal mencukupi: <b>'+bankN+'</b> soal tersedia.'+dynNote+'</div>';
   view.innerHTML='<a href="#/" class="btn btn-sm">← Kembali</a>'
     +'<div class="section-title">Pengaturan Simulasi — '+esc(s.name)+'</div>'
     +'<div class="two-col"><div class="card pad">'
@@ -358,7 +362,7 @@ function vSetup(subjectId){
   };
   var curCount=selCount, curMode=selMode;
   function refreshSuggestion(){
-    var eff=Math.min(curCount, window.TKAStore.getBank(s.id).length||curCount);
+    var eff=Math.min(curCount, (window.TKAStore.getBank(s.id).length+(window.dynamicCap?window.dynamicCap(s.id):0))||curCount);
     var sug=window.recommendedMinutes(s.id, eff, curMode);
     document.getElementById("fMin").value=sug;
     var a=Math.round(sug*60/(eff||1));
@@ -374,7 +378,7 @@ function vSetup(subjectId){
   });
   document.getElementById("fMin").oninput=function(e){
     var m=Math.max(1,Math.min(600,parseInt(e.target.value,10)||selMin));
-    var eff=Math.min(curCount, bankN||curCount);
+    var eff=Math.min(curCount, (bankN+(window.dynamicCap?window.dynamicCap(s.id):0))||curCount);
     var a=Math.round(m*60/(eff||1));
     document.getElementById("avgHint").innerHTML='Rata-rata: <b>'+fmtAvgSec(a)+'</b> per soal ('+m+' menit / '+eff+' soal). Timer berjalan global dan tidak reset saat pindah soal atau membuka Daftar Soal.';
   };
@@ -396,7 +400,8 @@ function vInstruksi(){
   var mode=p.mode&&window.TKA_TIME.modes[p.mode]?p.mode:window.TKA_TIME.defaultMode;
   p.mode=mode;
   var bankN=window.TKAStore.getBank(p.subject).length;
-  var realN=Math.min(p.count,bankN);
+  var dynCapI = window.dynamicCap ? window.dynamicCap(p.subject) : 0;
+  var realN=Math.min(p.count,bankN+dynCapI);
   var avgSec=realN? Math.round(p.minutes*60/realN) : 0;
   var md=window.TKA_TIME.modes[mode];
   view.innerHTML='<a href="#/setup?subject='+p.subject+'" class="btn btn-sm">← Pengaturan</a>'
@@ -417,7 +422,7 @@ function vInstruksi(){
     +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
     +'<li>Jangan refresh/menutup halaman selama ujian; state disimpan dan ada peringatan browser.</li>'
     +'<li>Klik <b>Selesai</b> pada soal terakhir bila yakin. Waktu habis juga otomatis selesai.</li></ol>'
-    +(bankN<p.count?'<div class="warn-box">Bank soal hanya '+bankN+' soal — simulasi memakai '+realN+' soal tanpa duplikasi.</div>':"")
+    +(bankN+dynCapI<p.count?'<div class="warn-box">Bank soal hanya '+bankN+'+'+dynCapI+' angka-acak soal — simulasi memakai '+realN+' soal tanpa duplikasi.</div>':"")
     +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami instruksi dan siap masuk mode fullscreen untuk memulai simulasi.</label>'
     +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" id="beginBtn" disabled>Mulai Simulasi</button></div></div>';
   var ag=document.getElementById("agree"), bb=document.getElementById("beginBtn");

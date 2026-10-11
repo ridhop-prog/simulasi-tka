@@ -38,9 +38,13 @@
 
   function buildSession(subject, count){
     var bank = window.TKAStore.getBank(subject);
-    if(bank.length===0) return {error:"Bank soal "+subject+" masih kosong."};
-    var take = Math.min(count, bank.length);
-    var insufficient = bank.length < count;
+    // Slot soal DINAMIS (angka diacak + jawaban dihitung ulang tiap sesi)
+    var dynCap = (window.dynamicCap) ? window.dynamicCap(subject) : 0;
+    var dyn = (window.instantiateDynamics && dynCap>0) ? window.instantiateDynamics(subject, Math.min(dynCap, count)) : [];
+    var staticNeed = Math.max(0, count - dyn.length);
+    if(bank.length===0 && dyn.length===0) return {error:"Bank soal "+subject+" masih kosong."};
+    var take = Math.min(staticNeed, bank.length);
+    var insufficient = (bank.length + dyn.length) < count;
     // pool: prioritaskan soal yang belum pernah dipakai
     var used = window.TKAStore.getUsed()[subject] || [];
     var usedSet = {}; used.forEach(function(id){usedSet[id]=1});
@@ -52,16 +56,18 @@
       pool = fresh.concat(rest);
     }
     var picked = shuffle(pool).slice(0, take).map(shuffleOptions);
+    // campur soal dinamis (sudah ber-ID unik per sesi) lalu acak posisi akhir
+    var all = shuffle(picked.concat(dyn).map(shuffleOptions));
     // jika semua soal sudah pernah dipakai dan pool habis -> reset agar siklus baru
-    if(fresh.length===0){
+    if(fresh.length===0 && bank.length>0){
       window.TKAStore.resetUsed(subject);
     }
     var now = Date.now();
     var session = {
       simulationId: "SIM"+now.toString(36).toUpperCase()+Math.floor(rng()*999),
       subject: subject,
-      questionIds: picked.map(function(q){return q.id}),
-      questions: picked,
+      questionIds: all.map(function(q){return q.id}),
+      questions: all,
       answers: {},       // qid -> array (MC/MS) atau object (TF)
       marked: [],
       currentIndex: 0,
@@ -70,7 +76,7 @@
       endTime: 0,
       status: "RUNNING"
     };
-    return {session:session, insufficient:insufficient, available:bank.length};
+    return {session:session, insufficient:insufficient, available:bank.length+dyn.length, dynamicCount:dyn.length};
   }
 
   function isAnswered(q, ans){
