@@ -280,9 +280,39 @@ table.mini th{background:#f2f6fd}
 .xw-grid{display:grid;gap:3px;justify-content:center;min-width:max-content;margin:0 auto}
 .xw-blank{width:var(--xw);height:var(--xw)}
 .xw-cell{position:relative;width:var(--xw);height:var(--xw)}
-.xw{width:100%;height:100%;border:1.5px solid #b9cdf0;border-radius:7px;text-align:center;font-weight:800;font-size:16px;text-transform:uppercase;background:#fff;color:var(--ink);padding:0;font-family:inherit}
-.xw:focus{outline:2px solid var(--accent);border-color:var(--accent)}
-.xw.hl{background:#e3eefe;border-color:#7aa8f0}
+.xw{width:100%;height:100%;border:1.5px solid #b9cdf0;border-radius:9px;text-align:center;font-weight:800;font-size:16px;text-transform:uppercase;background:#fff;color:var(--ink);padding:0;font-family:inherit;transition:border-color .12s,background .12s}
+.xw:focus{outline:none;border-color:var(--accent)}
+.xw.hl{background:#e3eefe;border-color:var(--accent)}
+.xw.cur{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.xw-num{color:var(--accent)}
+/* ===== Papan TTS ala mockup ===== */
+.tts-wrap{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:14px;align-items:start}
+.tts-board,.tts-side{padding:20px}
+.tts-chead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.tab-hint{font-size:12px;color:var(--muted);background:#f2f6fd;border:1px solid var(--line);padding:6px 10px;border-radius:9px;white-space:nowrap}
+kbd{background:#fff;border:1px solid #b9cdf0;border-bottom-width:2px;border-radius:6px;padding:1px 7px;font-family:inherit;font-size:11px;font-weight:800;color:var(--accent)}
+.tts-prog{margin-bottom:10px;display:flex;flex-direction:column;gap:6px}
+.tts-legend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.lg{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.sw-act{width:14px;height:14px;border-radius:5px;border:2px solid var(--accent);background:#e3eefe;display:inline-block}
+.sw-ok{width:14px;height:14px;border-radius:5px;background:var(--green);display:inline-block}
+.tts-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.clue-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 2px}
+.clue-tab{border:1.5px solid var(--line);background:#f4f8fe;border-radius:10px;padding:9px;font-size:12px;font-weight:800;color:var(--muted);cursor:pointer;font-family:inherit}
+.clue-tab.sel{background:#e3eefe;border-color:var(--accent);color:var(--accent)}
+.clue-sub{font-size:11px;font-weight:800;letter-spacing:.8px;margin:10px 0 6px}
+.clue-list{display:flex;flex-direction:column;gap:8px;max-height:48vh;overflow:auto;padding-right:2px}
+.clue-card{display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-areas:"no txt huruf" "no picked picked";gap:2px 8px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer;font-family:inherit;align-items:start;width:100%}
+.clue-card:hover{border-color:#9dbcf3}
+.clue-card.sel{border-color:var(--accent);background:#eef4fe;box-shadow:0 0 0 1px var(--accent)}
+.clue-card.done{opacity:.8}
+.clue-no{grid-area:no;font-weight:800;color:var(--muted);font-size:13px;padding-top:1px}
+.clue-card.sel .clue-no{color:var(--accent)}
+.clue-txt{grid-area:txt;font-size:13px;line-height:1.55;color:var(--ink)}
+.clue-huruf{grid-area:huruf;font-size:11px;color:var(--muted);white-space:nowrap}
+.clue-picked{grid-area:picked;font-size:11px;font-weight:800;color:var(--accent)}
+.clue-picked.done-p{color:var(--green)}
+.help-row{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
 .xw.ok{background:var(--green-bg);border-color:var(--green);color:#14703c}
 .xw.bad{background:var(--red-bg);border-color:var(--red)}
 .xw:disabled{opacity:1;cursor:default}
@@ -343,6 +373,9 @@ table.mini th{background:#f2f6fd}
   .toolbar input,.toolbar select{width:100%;min-width:0}
   .navpanel{max-width:100%;max-height:92vh}
   .clues{grid-template-columns:1fr}
+  .tts-wrap{grid-template-columns:minmax(0,1fr)}
+  .clue-list{max-height:40vh}
+  .tts-board,.tts-side{padding:16px}
 }
 @media(max-width:640px){
   .view{padding:14px 12px 44px}
@@ -402,6 +435,8 @@ table.mini th{background:#f2f6fd}
   .xw-num{font-size:8px}
   .quiz-opt{font-size:14px;padding:12px}
   .quiz-top{flex-wrap:wrap}
+  .tts-board,.tts-side{padding:14px}
+  .tab-hint{font-size:11px}
 }
 
 /* ===== Laporan evaluasi hasil ===== */

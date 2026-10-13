@@ -1771,31 +1771,55 @@ function renderTTS(focusKey){
         +'</div>';
     }
   }
-  function clueList(dir, title){
+  if(!T.tab) T.tab="H";
+  var nH=g.entries.filter(function(e){return e.dir==="H";}).length;
+  var nV=g.entries.length-nH;
+  function clueList(dir){
     var items=g.entries.map(function(e,i){ return {e:e,i:i}; }).filter(function(x){ return x.e.dir===dir; });
     items.sort(function(a,b){ return a.e.num-b.e.num; });
-    return '<div class="clue-col"><b>'+title+'</b>'+items.map(function(x){
+    return items.map(function(x){
       var done=x.e.cells.every(function(cell){ return T.locked[ttsKey(cell.r,cell.c)]; });
-      return '<button class="clue'+(x.i===T.entryIdx?" sel":"")+(done?" done":"")+'" data-clue="'+x.i+'"><b>'+x.e.num+'.</b> '+esc(x.e.c)+(done?" ✓":"")+'</button>';
-    }).join("")+'</div>';
+      var active=x.i===T.entryIdx;
+      return '<button class="clue-card'+(active?" sel":"")+(done?" done":"")+'" data-clue="'+x.i+'">'
+        +'<span class="clue-no">'+x.e.num+'.</span>'
+        +'<span class="clue-txt">'+esc(x.e.c)+'</span>'
+        +'<span class="clue-huruf">'+x.e.word.length+' Huruf</span>'
+        +(active?'<span class="clue-picked">Sedang Dipilih</span>':"")
+        +(done&&!active?'<span class="clue-picked done-p">✓</span>':"")
+        +'</button>';
+    }).join("");
   }
   var ae=ttsActiveEntry();
   view.innerHTML='<a href="#/mapel?mode=tts" class="btn btn-sm" id="ttsBack">← Pilih Mapel</a>'
-    +'<div class="section-title">TTS — '+esc(s.name)+'</div>'
-    +'<div class="tts-bar"><div class="progress">Terisi benar: '+lockedCount+'/'+g.totalCells+' ('+pct+'%) • Kata aktif: <b>'+ae.num+' '+(ae.dir==="H"?"Mendatar":"Menurun")+'</b></div>'
-    +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div></div>'
-    +'<div class="two-col"><div class="card pad"><div class="xw-wrap"><div class="xw-grid" style="grid-template-columns:repeat('+g.cols+',var(--xw))">'+cells+'</div></div>'
-    +'<p class="hint">Ketuk kotak/petunjuk untuk memilih kata, lalu ketik hurufnya. Huruf benar terkunci hijau.</p>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'
+    +'<div class="tts-wrap"><div class="card tts-board">'
+    +'<div class="tts-chead"><div><b>PAPAN TEKA-TEKI SILANG</b><div class="hint">Klik kotak untuk mulai mengetik jawaban</div></div>'
+    +'<span class="tab-hint"><kbd>Tab</kbd> Pindah kata berikutnya</span></div>'
+    +'<div class="tts-prog"><div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div><div class="hint">Terisi benar '+lockedCount+'/'+g.totalCells+'</div></div>'
+    +'<div class="xw-wrap"><div class="xw-grid" style="grid-template-columns:repeat('+g.cols+',var(--xw))">'+cells+'</div></div>'
+    +'<div class="tts-legend"><span class="hint">ⓘ Ketuk kotak/petunjuk untuk memilih kata, lalu ketik hurufnya. Huruf benar terkunci hijau.</span>'
+    +'<span class="lg"><i class="sw-act"></i>Aktif</span><span class="lg"><i class="sw-ok"></i>Terkunci Benar</span></div>'
+    +'<div class="tts-actions">'
     +'<button class="btn btn-primary" id="ttsCheck">Periksa Jawaban</button>'
     +'<button class="btn" id="ttsReset">Ulangi</button>'
     +'<button class="btn" id="ttsNew">Acak Baru</button>'
     +'<button class="btn" id="ttsFinish">Selesaikan</button></div></div>'
-    +'<div class="card pad"><div class="clues">'+clueList("H","Mendatar")+clueList("V","Menurun")+'</div></div></div>';
+    +'<div class="card tts-side">'
+    +'<div class="tts-chead"><div><b>📋 Daftar Petunjuk Soal</b></div><span class="hint">'+g.entries.length+' Pertanyaan</span></div>'
+    +'<div class="clue-tabs"><button class="clue-tab'+(T.tab==="H"?" sel":"")+'" data-tab="H">MENDATAR ('+nH+')</button>'
+    +'<button class="clue-tab'+(T.tab==="V"?" sel":"")+'" data-tab="V">MENURUN ('+nV+')</button></div>'
+    +'<div class="clue-sub hint">'+(T.tab==="H"?"MENDATAR (ACROSS)":"MENURUN (DOWN)")+'</div>'
+    +'<div class="clue-list">'+clueList(T.tab)+'</div>'
+    +'<div class="help-row"><span class="hint">Bantuan Cepat:</span><button class="btn btn-sm" id="ttsHelp">Buka 1 Huruf</button><button class="btn btn-sm" id="ttsClear">Hapus Kata</button></div>'
+    +'</div></div>';
   paintActiveEntry();
   // interaksi sel
   view.querySelectorAll(".xw").forEach(function(inp){
-    inp.addEventListener("focus", function(){ selectCellForInput(inp, false); });
+    inp.addEventListener("focus", function(){
+      view.querySelectorAll(".xw.cur").forEach(function(x){x.classList.remove("cur");});
+      inp.classList.add("cur");
+      selectCellForInput(inp, false);
+    });
+    inp.addEventListener("blur", function(){ inp.classList.remove("cur"); });
     inp.addEventListener("click", function(){ selectCellForInput(inp, true); });
     inp.addEventListener("input", function(){
       var r=+inp.getAttribute("data-r"), c=+inp.getAttribute("data-c"), k=ttsKey(r,c);
@@ -1805,7 +1829,8 @@ function renderTTS(focusKey){
     });
     inp.addEventListener("keydown", function(e){
       var r=+inp.getAttribute("data-r"), c=+inp.getAttribute("data-c");
-      if(e.key==="Backspace" && !inp.value){ e.preventDefault(); focusNextCell(r,c,-1); }
+      if(e.key==="Tab"){ e.preventDefault(); ttsNextEntry(); }
+      else if(e.key==="Backspace" && !inp.value){ e.preventDefault(); focusNextCell(r,c,-1); }
       else if(e.key==="ArrowLeft"){ e.preventDefault(); focusDelta(r,c,0,-1); }
       else if(e.key==="ArrowRight"){ e.preventDefault(); focusDelta(r,c,0,1); }
       else if(e.key==="ArrowUp"){ e.preventDefault(); focusDelta(r,c,-1,0); }
@@ -1815,6 +1840,15 @@ function renderTTS(focusKey){
   view.querySelectorAll("[data-clue]").forEach(function(b){
     b.onclick=function(){ window.TKASound.click(); T.entryIdx=+b.getAttribute("data-clue"); renderTTS(); focusEntryStart(); };
   });
+  view.querySelectorAll("[data-tab]").forEach(function(b){
+    b.onclick=function(){
+      var f=document.activeElement;
+      if(f&&f.classList&&f.classList.contains("xw")) T.focusKey=f.getAttribute("data-r")+","+f.getAttribute("data-c");
+      T.tab=b.getAttribute("data-tab"); window.TKASound.click(); renderTTS();
+    };
+  });
+  document.getElementById("ttsHelp").onclick=function(){ ttsReveal(); };
+  document.getElementById("ttsClear").onclick=function(){ ttsClearWord(); };
   document.getElementById("ttsCheck").onclick=ttsCheck;
   document.getElementById("ttsReset").onclick=function(){
     T.vals={}; T.wrong={}; T.locked={}; renderTTS(); toast("TTS diulang dari awal.");
@@ -1832,7 +1866,7 @@ function renderTTS(focusKey){
 function paintActiveEntry(){
   var T=S.tts; if(!T) return;
   var ae=ttsActiveEntry(); if(!ae) return;
-  view.querySelectorAll(".xw").forEach(function(inp){ inp.classList.remove("hl","cur"); });
+  view.querySelectorAll(".xw").forEach(function(inp){ inp.classList.remove("hl"); });
   ae.cells.forEach(function(cell){
     var inp=view.querySelector('input[data-r="'+cell.r+'"][data-c="'+cell.c+'"]');
     if(inp) inp.classList.add("hl");
@@ -1866,8 +1900,55 @@ function focusEntryCell(cell){
   if(inp){ inp.focus(); }
 }
 function focusEntryStart(){
+  var T=S.tts, ae=ttsActiveEntry();
+  if(!ae||!ae.cells.length) return;
+  // fokus ke kotak kosong/belum terkunci pertama agar bisa langsung mengetik
+  for(var i=0;i<ae.cells.length;i++){
+    var k=ttsKey(ae.cells[i].r,ae.cells[i].c);
+    if(!T.locked[k] && !(T.vals[k]||"")){ focusEntryCell(ae.cells[i]); return; }
+  }
+  focusEntryCell(ae.cells[0]);
+}
+// [Tab]: pindah ke kata berikutnya (siklus)
+function ttsNextEntry(){
+  var T=S.tts; if(!T||T.done) return;
+  T.entryIdx=(T.entryIdx+1)%T.grid.entries.length;
   var ae=ttsActiveEntry();
-  if(ae&&ae.cells.length) focusEntryCell(ae.cells[0]);
+  if(ae&&ae.dir!==T.tab) T.tab=ae.dir;
+  window.TKASound.click();
+  T.focusKey=null;
+  // set fokus langsung tanpa render ulang penuh bila memungkinkan
+  renderTTS();
+  focusEntryStart();
+}
+// Bantuan: buka 1 huruf pertama yang belum benar pada kata aktif
+function ttsReveal(){
+  var T=S.tts; if(!T||T.done) return;
+  var ae=ttsActiveEntry(); if(!ae) return;
+  for(var i=0;i<ae.cells.length;i++){
+    var cell=ae.cells[i], k=ttsKey(cell.r,cell.c);
+    if(T.locked[k]) continue;
+    if((T.vals[k]||"").toUpperCase()!==cell.ch){
+      T.vals[k]=cell.ch; T.locked[k]=1; delete T.wrong[k];
+      window.TKASound.correct();
+      T.focusKey=k; renderTTS();
+      toast("1 huruf dibuka: "+cell.ch);
+      return;
+    }
+  }
+  toast("Kata ini sudah benar semua.");
+}
+// Bantuan: hapus isian kata aktif (yang belum terkunci)
+function ttsClearWord(){
+  var T=S.tts; if(!T||T.done) return;
+  var ae=ttsActiveEntry(); if(!ae) return;
+  ae.cells.forEach(function(cell){
+    var k=ttsKey(cell.r,cell.c);
+    if(!T.locked[k]){ delete T.vals[k]; delete T.wrong[k]; }
+  });
+  window.TKASound.click();
+  renderTTS(); focusEntryStart();
+  toast("Kata dikosongkan.");
 }
 function focusNextCell(r,c,step){
   var ae=ttsActiveEntry(); if(!ae) return;
