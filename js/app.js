@@ -229,6 +229,7 @@ function render(){
     return;
   }
   setNav(path);
+  refreshTopbar();
   window.scrollTo(0,0);
   if(path==="" ) return vDashboard();
   if(path==="mapel") return vMapel(r.q.mode);
@@ -262,38 +263,73 @@ document.getElementById("hamburger").onclick=function(){ topnav.classList.toggle
 document.getElementById("brandLink").onclick=function(){ topnav.classList.remove("open"); };
 topnav.addEventListener("click", function(){ topnav.classList.remove("open"); });
 
-/* ================= DASHBOARD — PILIH MODE BELAJAR ================= */
+/* ================= DASHBOARD ================= */
+function modeFlag(m){
+  if(m==="ujian") return '<span class="mode-flag" style="background:#e8f0fe;color:#1a5fd0">Rekomendasi Hari Ini</span>';
+  if(m==="tts") return '<span class="mode-flag" style="background:#e4f6eb;color:#14703c">XP Bonus x2</span>';
+  return '<span class="mode-flag" style="background:#e3f3fc;color:#03608f">Mode Cepat</span>';
+}
+function modeCat(m){
+  if(m==="ujian") return "CBT RESMI • Semua Mapel";
+  if(m==="tts") return "GAMIFIKASI • Teka-teki";
+  return "KUIS KILAT • Skor & Streak";
+}
+function modeFeats(m){
+  if(m==="ujian") return ["Timer realistis per bagian","Pembahasan lengkap + riwayat"];
+  if(m==="tts") return ["Petunjuk lintas materi","Main santai tanpa timer"];
+  return ["Kombo streak pengganda poin","Timer per soal + suara"];
+}
+function modeBtn(m){
+  if(m==="ujian") return '<a class="btn btn-primary" href="#/mapel?mode=ujian">Mulai Ujian CBT →</a>';
+  if(m==="tts") return '<a class="btn btn-green" href="#/mapel?mode=tts">Mainkan TTS</a>';
+  return '<a class="btn btn-teal" href="#/mapel?mode=kuis">Tantang Kuis Kilat →</a>';
+}
 function vDashboard(){
   var hist=window.TKAStore.getHistory();
   var totalSim=hist.length;
   var avg = totalSim? Math.round(hist.reduce(function(a,h){return a+h.nilai},0)/totalSim):0;
   var best = totalSim? Math.max.apply(null,hist.map(function(h){return h.nilai})):0;
+  var bestSubj = totalSim? (function(){ var b=hist.reduce(function(a,h){return h.nilai>=(a?a.nilai:-1)?h:a},null); return b?window.subjectName(b.subject):"—"; })():"—";
   var totalSoal = window.TKAStore.getAllBank().length;
+  var xp=xpTotal(), wk=weekCount();
   var modes=["ujian","tts","kuis"].map(function(m){
     var d=window.LEARN_MODES[m];
-    return '<div class="card mode-card-lg">'
+    return '<div class="card mode-card-lg">'+modeFlag(m)
       +'<div class="mode-ico" style="background:'+d.color+'">'+d.icon+'</div>'
+      +'<div class="mode-cat">'+modeCat(m)+'</div>'
       +'<h3>'+esc(d.title)+'</h3><p>'+esc(d.desc)+'</p>'
-      +'<button class="btn btn-primary" data-mode="'+m+'">Pilih Mode Ini</button></div>';
+      +'<div class="mode-feats">'+modeFeats(m).map(function(f){return '<span>◉ '+esc(f)+'</span>'}).join("")+'</div>'
+      +modeBtn(m)+'</div>';
   }).join("");
-  var recent = hist.slice(0,5).map(histItem).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai dari salah satu mode belajar!</div>';
+  var recent = hist.slice(0,5).map(function(h){return histRow(h);}).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai dari salah satu mode belajar!</div>';
+  var top3 = hist.slice().sort(function(a,b){return b.nilai-a.nilai;}).slice(0,3).map(function(h,i){
+    return '<div class="top-row'+(i===0?" me":"")+'"><span class="top-rank">'+(i+1)+'</span>'
+      +'<span class="top-name">'+esc(window.subjectName(h.subject))+'<small>'+esc(window.historyModeLabel(h.mode||"normal"))+' • '+h.correct+'/'+h.total+'</small></span>'
+      +'<span class="top-pts">'+h.nilai+' Pts</span></div>';
+  }).join("") || '<p class="hint">Belum ada skor — mainkan sesi pertamamu!</p>';
+  var need=Math.max(0,5-wk);
   view.innerHTML =
-    '<div class="hero"><div><h1>SIMULASI TKA</h1>'
-    +'<p>Latihan Tes Kemampuan Akademik untuk siswa SMK jurusan PPLG/RPL lewat ujian simulasi, teka-teki silang, dan kuis interaktif — semua tersimpan lokal di perangkatmu.</p></div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn" href="#/generator">Buat Prompt AI</a></div></div>'
+    '<div class="hero"><div><div><span class="code-chip">console.log("Siap Ujian!");</span><span class="class-pill">● PPLG/RPL Class 2026/2027</span><span class="hero-sub">Kurikulum Merdeka CBT</span></div>'
+    +'<h1>Level Up Kompetensi TKA RPL &amp; PPLG! 🚀</h1>'
+    +'<p>Asah kesiapan Ujian Kemampuan Akademik Kejuruan melalui simulasi adaptif CBT, tantangan Teka-Teki Silang logika algoritma, dan kuis kilat gamifikasi — 100% cepat &amp; tersimpan lokal.</p></div>'
+    +'<div class="hero-actions"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn btn-primary" href="#/generator">Buat Prompt AI</a></div></div>'
     +'<div class="stats">'
-    +'<div class="card stat"><b>'+totalSim+'</b><span>Total permainan</span></div>'
-    +'<div class="card stat"><b>'+avg+'</b><span>Rata-rata nilai</span></div>'
-    +'<div class="card stat"><b>'+best+'</b><span>Nilai terbaik</span></div>'
-    +'<div class="card stat"><b>'+totalSoal+'</b><span>Total soal di bank</span></div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">TOTAL LATIHAN</span><span class="stat-ico" style="background:#e8f0fe">🎮</span></div><div class="stat-num"><b>'+totalSim+'</b><span class="stat-unit">sesi</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">⚡ +'+xp+' XP</span></div><div class="stat-bar"><i style="width:'+Math.min(100,totalSim/8*100)+'%"></i></div><div class="stat-foot">Target mingguan: '+wk+' dari 8 sesi</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">AKURASI RATA-RATA</span><span class="stat-ico" style="background:#e3f3fc">🎯</span></div><div class="stat-num"><b>'+avg+'</b><span class="stat-unit">/100</span><span class="stat-tag" style="background:'+(avg>=75?"#e4f6eb;color:#14703c":"#fdf1de;color:#8a5a00")+'">'+(avg>=75?"🎉 Mantap":"📈 Perlu Asah")+'</span></div><div class="stat-bar"><i style="width:'+avg+'%"></i></div><div class="stat-foot">'+(totalSim?"+data dari "+totalSim+" sesi":"Belum ada data")+'</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">HIGH SCORE</span><span class="stat-ico" style="background:#fdf1de">🏆</span></div><div class="stat-num"><b>'+best+'</b><span class="stat-unit">pts</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">'+(best>=80?"🏆 Rekor Baru":"💪 Terus Berlatih")+'</span></div><div class="stat-bar"><i style="width:'+best+'%"></i></div><div class="stat-foot">'+esc(bestSubj)+'</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">KOLEKSI SOAL</span><span class="stat-ico" style="background:#e4f6eb">📚</span></div><div class="stat-num"><b>'+totalSoal+'</b><span class="stat-unit">butir</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">✓ Siap Ujian</span></div><div class="stat-bar green"><i style="width:'+Math.min(100,totalSoal/3)+'%"></i></div><div class="stat-foot">5 Mapel Kejuruan RPL</div></div></div>'
     +'<div class="section-title">Pilih Mode Belajar</div>'
-    +'<p class="hint" style="margin-top:-6px">Pilih cara belajar yang sesuai dengan keinginanmu.</p>'
+    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian serius, santai teka-teki, atau duel kilat. <span style="float:right">⭐ Dapatkan reward XP setiap sesi</span></p>'
     +'<div class="grid-modes">'+modes+'</div>'
-    +'<div class="section-title">Riwayat Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent)">Lihat semua →</a></div>'
-    +'<div class="hist-list">'+recent+'</div>';
-  view.querySelectorAll("[data-mode]").forEach(function(b){
-    b.onclick=function(){ location.hash="#/mapel?mode="+b.getAttribute("data-mode"); };
-  });
+    +'<div class="dash-bottom"><div>'
+    +'<div class="section-title">Riwayat Belajar Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent);font-weight:700">Lihat Semua Sesi →</a></div>'
+    +'<div class="hist-list">'+recent+'</div></div>'
+    +'<div class="card side-panel"><div class="side-head">Target &amp; Ranking <span class="badge">Minggu Ini</span></div>'
+    +'<div><div class="target-row"><span>Target 5 Ujian CBT</span><b>'+Math.min(wk,5)+' / 5 Ujian</b></div><div class="target-bar"><i style="width:'+Math.min(100,wk/5*100)+'%"></i></div><div class="hint">Kurang '+need+' simulasi lagi untuk raih badge “CBT Master 🚀”</div></div>'
+    +'<div class="target-row"><span><b>SKOR TERBAIK KAMU</b></span><span class="hint">Lokal</span></div>'
+    +'<div class="top-list">'+top3+'</div>'
+    +'<div class="tip-box">💡 <b>Tip CBT:</b> kerjakan soal flowchart &amp; pseudocode lebih awal untuk efisiensi waktu 40%.</div>'
+    +'</div></div>';
 }
 
 /* ================= PILIH MATA PELAJARAN PER MODE ================= */
@@ -334,13 +370,43 @@ function vMapel(mode){
       : "")
     +'<div class="grid-subjects">'+cards+'</div>';
 }
-function histItem(h){
-  var cls = h.nilai>=80?"":h.nilai>=60?"mid":"low";
-  var st = h.status==="COMPLETED"?'<span class="badge ok">Selesai</span>':h.status==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':'<span class="badge err">Dihentikan</span>';
-  return '<div class="card hist-item"><div class="hist-score '+cls+'">'+h.nilai+'</div>'
-    +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' benar • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+' • '+esc(window.historyModeLabel(h.mode||"normal"))+'</div></div>'
-    +st+'</div>';
+/* ---------- XP / level / target mingguan (murni dari riwayat lokal) ---------- */
+function xpTotal(){
+  return window.TKAStore.getHistory().reduce(function(a,h){return a+(h.nilai||0);},0);
 }
+function levelOf(xp){
+  var lvl=Math.floor(xp/250)+1;
+  var titles=["Pemula","Penjelajah","Pejuang","Ksatria","Master","Legenda"];
+  return {lvl:lvl, title:titles[Math.min(lvl-1,titles.length-1)]};
+}
+function weekCount(){
+  var week=Date.now()-7*24*3600*1000;
+  return window.TKAStore.getHistory().filter(function(h){return h.date>=week;}).length;
+}
+function refreshTopbar(){
+  var el=document.getElementById("lvlPill");
+  if(!el) return;
+  var xp=xpTotal(), lv=levelOf(xp);
+  el.textContent="Lvl "+lv.lvl+" "+lv.title+" • "+xp+" XP";
+}
+function histScoreCls(nilai){ return nilai>=80?"":nilai>=60?"mid":"low"; }
+function histStatusPill(h){
+  return h.status==="COMPLETED"?'<span class="badge ok">● Selesai</span>':h.status==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':'<span class="badge err">● Dihentikan</span>';
+}
+function histUlangi(h){
+  var to = h.subject==="lengkap" ? "#/setup-lengkap" : h.mode==="kuis" ? "#/kuis?subject="+h.subject : h.mode==="tts" ? "#/tts?subject="+h.subject : "#/setup?subject="+h.subject;
+  return '<a class="btn btn-sm" href="'+to+'">⟳ Ulangi</a>';
+}
+function histRow(h, actions){
+  var hasQ = h.questions && h.questions.length;
+  var act = actions || ((h.status==="COMPLETED"&&hasQ)
+    ? '<a class="btn btn-sm" href="#/review?id='+h.id+'">Review</a>'
+    : histUlangi(h));
+  return '<div class="card hist-item"><div class="hist-score '+histScoreCls(h.nilai)+'">'+h.nilai+'</div>'
+    +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+' <span class="badge">'+esc(window.historyModeLabel(h.mode||"normal"))+'</span></b><div>'+h.correct+'/'+h.total+' Benar • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+'</div></div>'
+    +'<div class="hist-act">'+histStatusPill(h)+act+'</div></div>';
+}
+function histItem(h){ return histRow(h); }
 
 /* ================= SETUP TKA LENGKAP (5 mapel berurutan) ================= */
 /* ============ SETUP TKA LENGKAP — paket resmi otomatis ============ */
@@ -1021,9 +1087,11 @@ function vRiwayat(){
   }).join(" ");
   var rows=filtered.map(function(h){
     var avg=h.avgSecPerQ!=null? ' • '+fmtAvgSec(h.avgSecPerQ)+'/soal' : '';
-    return '<div class="card hist-item"><div class="hist-score '+(h.nilai>=80?"":h.nilai>=60?"mid":"low")+'">'+h.nilai+'</div>'
-      +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+'</b><div>'+h.correct+'/'+h.total+' • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+avg+' • '+esc(window.historyModeLabel(h.mode||"normal"))+' • '+(h.finishReason||h.status)+'</div></div>'
-      +'<div style="display:flex;gap:6px"><a class="btn btn-sm" href="#/review?id='+h.id+'">Bahasan</a><button class="btn btn-sm" data-del="'+h.id+'">Hapus</button></div></div>';
+    var hasQ = h.questions && h.questions.length;
+    var acts=(hasQ?'<a class="btn btn-sm" href="#/review?id='+h.id+'">Review</a>':"")+histUlangi(h)+'<button class="btn btn-sm" data-del="'+h.id+'">Hapus</button>';
+    return '<div class="card hist-item"><div class="hist-score '+histScoreCls(h.nilai)+'">'+h.nilai+'</div>'
+      +'<div class="hist-main"><b>'+esc(window.subjectName(h.subject))+' <span class="badge">'+esc(window.historyModeLabel(h.mode||"normal"))+'</span></b><div>'+h.correct+'/'+h.total+' • '+fmtDate(h.date)+' • '+esc(fmtDur(h.durationMs))+avg+' • '+(h.finishReason||h.status)+'</div></div>'
+      +'<div class="hist-act">'+histStatusPill(h)+acts+'</div></div>';
   }).join("") || '<div class="card pad hint">Belum ada riwayat untuk filter ini.</div>';
   view.innerHTML='<div class="section-title">Riwayat Simulasi</div>'
     +'<div class="card pad" style="margin-bottom:12px"><b>Perbandingan per Mode</b><div class="subj-meta" style="margin-top:8px">'+chips+'</div>'

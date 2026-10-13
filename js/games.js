@@ -27,11 +27,11 @@ function cleanWord(w){
 
 /* ---------- label mode belajar ---------- */
 var LEARN_MODES = {
-  ujian: { title: "Ujian TKA Umum", icon: "📋", color: "#2563eb",
+  ujian: { title: "Ujian TKA Standar", icon: "📋", color: "#1f6feb",
            desc: "Latihan ujian dengan sistem simulasi TKA, lengkap dengan timer, navigasi soal, penilaian, dan pembahasan." },
-  tts:   { title: "TTS", icon: "🧩", color: "#0d9488",
+  tts:   { title: "TTS Algoritma & Logika", icon: "🧩", color: "#16a34a",
            desc: "Asah pemahaman materi melalui permainan teka-teki silang dengan petunjuk dan kotak jawaban." },
-  kuis:  { title: "Tebak-tebakan", icon: "💡", color: "#7c3aed",
+  kuis:  { title: "Quick Quiz / Tebak-tebakan", icon: "⚡", color: "#0284c7",
            desc: "Uji pengetahuan melalui kuis interaktif dengan pertanyaan, pilihan jawaban, skor, dan timer." }
 };
 window.LEARN_MODES = LEARN_MODES;

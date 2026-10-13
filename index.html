@@ -7,7 +7,7 @@
 <meta name="description" content="Platform CBT Simulasi TKA untuk siswa SMK jurusan PPLG/RPL.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -15,23 +15,28 @@
   <header class="topbar" id="topbar">
     <div class="topbar-inner">
       <a href="#/" class="brand" id="brandLink">
-        <span class="brand-mark">TKA</span>
-        <span class="brand-text">SIMULASI TKA <small>SMK • PPLG/RPL</small></span>
+        <span class="brand-mark">&lt;/&gt;</span>
+        <span class="brand-text">SIMULASI TKA <span class="pro-badge">PRO</span><small>SMK PPLG • REKAYASA PERANGKAT LUNAK</small></span>
       </a>
       <nav class="topnav" id="topnav">
         <a href="#/" data-nav="dashboard">Beranda</a>
         <a href="#/bank" data-nav="bank">Bank Soal</a>
         <a href="#/import" data-nav="import">Import Soal</a>
         <a href="#/generator" data-nav="generator">Prompt AI</a>
-        <a href="#/tambah" data-nav="tambah">Tambah Soal</a>
         <a href="#/riwayat" data-nav="riwayat">Riwayat</a>
       </nav>
+      <div class="topbar-side">
+        <span class="lvl-pill" id="lvlPill" title="Level dari total XP riwayat belajarmu">Lvl 1 • 0 XP</span>
+        <span class="offline-pill"><i class="dot-online"></i>Mode Offline Siap</span>
+        <span class="avatar">S</span>
+      </div>
       <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
     </div>
   </header>
   <main id="view" class="view"></main>
   <footer class="footer">
-    <span>SIMULASI TKA • Platform CBT Sekolah Modern • Data tersimpan lokal (LocalStorage)</span>
+    <span><b>TKA</b> SIMULASI TKA SMK PPLG/RPL <span class="sep">•</span> Platform CBT &amp; Gamifikasi Kejuruan Modern</span>
+    <span class="foot-right">AutoSave LocalStorage <span class="sep">•</span> Versi 2.4.0 (2026/2027)</span>
   </footer>
 </div>
 
