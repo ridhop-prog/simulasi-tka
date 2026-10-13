@@ -125,6 +125,38 @@
     };
     return {session:session, insufficient:insufficient, available:available, dynamicCount:dynTotal};
   }
+  // ===== PAKET CAMPURAN: gabungan beberapa mapel, diacak jadi satu, SATU timer =====
+  // specs: [{subject, count}] — blocks disimpan hanya untuk breakdown/pembahasan
+  function buildSessionCampuran(specs){
+    var blocks=[], insufficient=false, available=0, dynTotal=0;
+    for(var i=0;i<specs.length;i++){
+      var sp=specs[i];
+      var bank=window.TKAStore.getBank(sp.subject);
+      var dynCap=(window.dynamicCap)?window.dynamicCap(sp.subject):0;
+      var dyn=(window.instantiateDynamics&&dynCap>0)?window.instantiateDynamics(sp.subject,Math.min(dynCap,sp.count)):[];
+      if(bank.length===0&&dyn.length===0) return {error:"Bank soal "+window.subjectName(sp.subject)+" masih kosong."};
+      var take=Math.min(Math.max(0,sp.count-dyn.length), bank.length);
+      if((bank.length+dyn.length)<sp.count) insufficient=true;
+      var picked=sampleStatic(bank, sp.subject, take);
+      blocks.push({subject:sp.subject, questions:picked.concat(dyn).map(shuffleOptions)});
+      available+=bank.length+dyn.length; dynTotal+=dyn.length;
+    }
+    var flat=[];
+    blocks.forEach(function(b){ flat=flat.concat(b.questions); });
+    flat=shuffle(flat);
+    markDynUsed(flat.filter(function(q){return q.tplId;}));
+    var now=Date.now();
+    var session={
+      simulationId:"SIM"+now.toString(36).toUpperCase()+Math.floor(rng()*999),
+      subject:"campuran", customMix:true,
+      blocks:blocks, blockStarts:[],
+      questionIds:flat.map(function(q){return q.id}),
+      questions:flat,
+      answers:{}, marked:[], currentIndex:0,
+      startTime:now, durationMs:0, endTime:0, status:"RUNNING"
+    };
+    return {session:session, insufficient:insufficient, available:available, dynamicCount:dynTotal};
+  }
   // Blok ke-i yang memuat index global idx
   function blockOf(session, idx){
     if(!session.blocks) return {i:0, subject:session.subject, start:0, count:session.questions.length};
@@ -234,7 +266,7 @@
 
   window.TKAEngine = {
     shuffle:shuffle, shuffleOptions:shuffleOptions, buildSession:buildSession,
-    buildSessionLengkap:buildSessionLengkap, blockOf:blockOf, scoreBlocks:scoreBlocks,
+    buildSessionLengkap:buildSessionLengkap, buildSessionCampuran:buildSessionCampuran, blockOf:blockOf, scoreBlocks:scoreBlocks,
     isAnswered:isAnswered, isFullyAnswered:isFullyAnswered, isCorrect:isCorrect, score:score,
     enterFullscreen:enterFullscreen, exitFullscreen:exitFullscreen, playAlarm:playAlarm
   };

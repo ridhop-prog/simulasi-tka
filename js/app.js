@@ -133,7 +133,8 @@ function startTimer(){
     var ses=S.session;
     var deadline = ses.blockEnd || ses.endTime;
     var remain = deadline - Date.now();
-    var total = (ses.blocks ? (ses.blocks[ses.blockIdx||0]||{}).durationMs : null) || ses.totalMs || ses.durationMs || 1;
+    var total = ses.customMix ? (ses.totalMs||ses.durationMs||1)
+      : (ses.blocks ? (ses.blocks[ses.blockIdx||0]||{}).durationMs : null) || ses.totalMs || ses.durationMs || 1;
     var frac = remain/total;
     var warnAt = window.TKA_TIME.warnAt, dangerAt = window.TKA_TIME.dangerAt;
     var el=document.getElementById("simTimer");
@@ -199,7 +200,7 @@ function finishSession(reason, fromFullscreen){
 }
 
 /* ---------- router ---------- */
-var routes = ["dashboard","mapel","setup","setup-lengkap","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah","tts","kuis"];
+var routes = ["dashboard","mapel","kustom","setup","setup-lengkap","instruksi","simulasi","hasil","review","riwayat","bank","import","generator","tambah","tts","kuis"];
 function parseHash(){
   var h=(location.hash||"#/").replace(/^#\/?/,"");
   var parts=h.split("?");
@@ -222,7 +223,7 @@ function render(){
   var r=parseHash(), path=r.path;
   if(typeof closeNavPanel==="function" && path!=="simulasi") closeNavPanel();
   // cegah navigasi tak sengaja dari permainan aktif (ujian / TTS / kuis)
-  if(S.leaveGuard && ["","mapel","setup","setup-lengkap","instruksi","bank","import","generator","tambah","riwayat","hasil","review"].indexOf(path)!==-1){
+  if(S.leaveGuard && ["","mapel","kustom","setup","setup-lengkap","instruksi","bank","import","generator","tambah","riwayat","hasil","review"].indexOf(path)!==-1){
     // kembalikan ke rute permainan + tawarkan konfirmasi keluar
     location.hash=S.leaveGuard.route;
     confirmLeaveGame();
@@ -233,6 +234,7 @@ function render(){
   window.scrollTo(0,0);
   if(path==="" ) return vDashboard();
   if(path==="mapel") return vMapel(r.q.mode);
+  if(path==="kustom") return vKustom();
   if(path==="setup-lengkap") return vSetupLengkap();
   if(path==="tts") return vTTS(r.q.subject);
   if(path==="kuis") return vKuis(r.q.subject);
@@ -333,19 +335,34 @@ function vDashboard(){
 }
 
 /* ================= PILIH MATA PELAJARAN PER MODE ================= */
+var MAPEL_CAT={matematika:"Standar Saintek/Teknik",bindo:"Literasi & Kebahasaan",binggris:"Reading & Grammar",produktif:"Kejuruan Inti",pkwu:"Bisnis & Manajemen"};
+var MAPEL_RUMPUN={matematika:"umum",bindo:"umum",binggris:"umum",produktif:"kejuruan",pkwu:"kejuruan"};
+var MAPEL_DESC={
+  matematika:"Simulasi TKA Matematika (Aljabar, Geometri, Trigonometri, Statistika & Kalkulus dasar).",
+  bindo:"Simulasi TKA Bahasa Indonesia (Pemahaman teks bacaan, kaidah EYD/PUEBI, analisis paragraf & teks prosedural).",
+  binggris:"Simulasi TKA Bahasa Inggris (Reading comprehension, grammatical structure, vocabulary context & dialogue).",
+  produktif:"Simulasi TKA Produktif PPLG/RPL (Algoritma pemrograman, OOP, basis data SQL, dasar web modern & mobile).",
+  pkwu:"Simulasi TKA PKWU (Perencanaan usaha digital, break-even point/BEP, strategi pemasaran, & operasional produksi)."
+};
 function vMapel(mode){
   mode = window.LEARN_MODES[mode] ? mode : "ujian";
   var d = window.LEARN_MODES[mode];
-  var cards = window.TKA_CONFIG.subjects.map(function(s){
+  S.mapelFilter=S.mapelFilter||"all";
+  var f=S.mapelFilter;
+  var headEyebrow = mode==="ujian" ? "KATALOG UJIAN STANDAR"
+    : mode==="tts" ? "KATALOG TEKA-TEKI" : "KATALOG KUIS KILAT";
+  var cards = window.TKA_CONFIG.subjects
+    .filter(function(s){ return f==="all" || MAPEL_RUMPUN[s.id]===f; })
+    .map(function(s){
     var nBank=window.TKAStore.getBank(s.id).length;
-    var extra="", go="", btn="Pilih";
+    var extra="", go="", btn="Pilih Mapel ›";
     if(mode==="tts"){
       var nW=(window.BANK_TTS&&window.BANK_TTS[s.id])?window.BANK_TTS[s.id].length:0;
-      extra = nW? nW+' kata TTS tersedia' : 'Belum ada kata TTS';
+      extra = nW? nW+' kata TTS' : 'Belum ada kata TTS';
       go = nW? '#/tts?subject='+s.id : '';
     } else if(mode==="kuis"){
       var avail=window.TKAGames.quizItemCount(s.id);
-      extra = avail? avail+' soal kuis tersedia' : 'Belum ada soal kuis';
+      extra = avail? avail+' soal kuis' : 'Belum ada soal kuis';
       go = avail? '#/kuis?subject='+s.id : '';
     } else {
       extra = nBank+' soal di bank';
@@ -353,22 +370,43 @@ function vMapel(mode){
     }
     return '<div class="card subj-card">'
       +'<div class="subj-top"><span class="subj-icon" style="background:'+s.color+'">'+esc(s.icon)+'</span>'
-      +'<div><h3>'+esc(s.name)+'</h3><div style="font-size:12px;color:var(--muted)">'+extra+'</div></div></div>'
-      +'<p>'+esc(s.desc)+'.</p>'
-      +(go? '<a class="btn btn-primary" href="'+go+'">'+btn+'</a>'
+      +'<div><h3>'+esc(s.name)+'</h3><div class="subj-sub">'+extra+' • '+esc(MAPEL_CAT[s.id])+'</div></div></div>'
+      +'<p>'+esc(MAPEL_DESC[s.id]||s.desc)+'</p>'
+      +(go? '<a class="btn btn-primary btn-block" href="'+go+'">'+btn+'</a>'
           : '<div class="warn-box">Data belum tersedia untuk mode ini. Kelola soal lewat <a href="#/bank" style="text-decoration:underline">Bank Soal</a>.</div>')
       +'</div>';
   }).join("");
+  var feat = (mode==="ujian")
+    ? '<div class="card pad feat-card"><div class="feat-accent"></div>'
+      +'<div class="feat-head"><span class="badge dark">5IN1</span><span class="pill gold">★ Format Resmi Terintegrasi</span></div>'
+      +'<h3>TKA Lengkap — Semua Mapel Berurutan</h3>'
+      +'<div class="feat-meta">🗂 135 butir soal &nbsp;•&nbsp; 🕐 ±5 jam 45 menit &nbsp;•&nbsp; Paket resmi otomatis &nbsp;•&nbsp; Multi-sesi berseri</div>'
+      +'<p>Ujian seperti TKA sebenarnya: 5 bagian berurutan dengan timer tiap mapel, jeda waktu istirahat antar-bagian, penilaian terpisah per mapel, serta kalkulasi nilai gabungan simulasi secara komprehensif.</p>'
+      +'<div class="feat-checks"><span>✓ Soal Teracak</span><span>✓ Timer Otomatis Per Sesi</span><span>✓ Rapor Lengkap &amp; Pembahasan</span></div>'
+      +'<div class="feat-act"><a class="btn btn-primary" href="#/setup-lengkap">Atur &amp; Mulai TKA Lengkap →</a></div></div>'
+    : "";
+  var kustom = (mode==="ujian")
+    ? '<div class="card subj-card kustom-card">'
+      +'<div class="subj-top"><span class="subj-icon ghost">+</span>'
+      +'<div><h3>Latihan Kustom</h3></div></div>'
+      +'<p>Buat paket ujian fleksibel dengan memilih kombinasi topik dan durasi timer mandiri.</p>'
+      +'<a class="btn btn-block" href="#/kustom">Kustomisasi Paket</a></div>'
+    : "";
   view.innerHTML='<a href="#/" class="btn btn-sm">← Pilih Mode</a>'
-    +'<div class="section-title">Pilih Mata Pelajaran — '+esc(d.title)+'</div>'
-    +'<p class="hint" style="margin-top:-6px">'+esc(d.desc)+'</p>'
-    +(mode==="ujian"
-      ? '<div class="card pad lengkap-card" style="margin-bottom:14px"><div class="subj-top"><span class="subj-icon" style="background:#0f172a">5in1</span>'
-        +'<div><h3>TKA Lengkap — Semua Mapel Berurutan</h3><div style="font-size:12px;color:var(--muted)">135 soal • ±5 jam 45 mnt • paket resmi otomatis</div></div></div>'
-        +'<p>Ujian seperti TKA sebenarnya: 5 bagian berurutan dengan timer tiap mapel, jeda antar-bagian, nilai per mapel + nilai gabungan.</p>'
-        +'<a class="btn btn-primary" href="#/setup-lengkap">Atur TKA Lengkap</a></div>'
-      : "")
-    +'<div class="grid-subjects">'+cards+'</div>';
+    +'<div class="cat-eyebrow">'+headEyebrow+' <span>• Tahun Ajaran 2024/2025</span></div>'
+    +'<div class="section-title big">Pilih Mata Pelajaran — '+esc(d.title)+'</div>'
+    +'<p class="hint">'+esc(d.desc)+'</p>'
+    + feat
+    +'<div class="mapel-bar"><div><div class="section-title" style="margin:0">Pilihan Mata Pelajaran Mandiri</div>'
+    +'<p class="hint" style="margin:2px 0 0">Latihan parsial per mata pelajaran secara terpisah dan terarah.</p></div>'
+    +'<div class="filter-pills"><button class="radio-pill'+(f==="all"?" sel":"")+'" data-f="all">Semua Mapel</button>'
+    +'<button class="radio-pill'+(f==="umum"?" sel":"")+'" data-f="umum">Umum / Wajib</button>'
+    +'<button class="radio-pill'+(f==="kejuruan"?" sel":"")+'" data-f="kejuruan">Kejuruan RPL</button></div></div>'
+    +'<div class="grid-subjects">'+cards+kustom+'</div>'
+    +'<div class="tip-box" style="margin-top:14px">💡 <b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
+  view.querySelectorAll("[data-f]").forEach(function(b){
+    b.onclick=function(){ S.mapelFilter=b.getAttribute("data-f"); vMapel(mode); window.scrollTo(0,0); };
+  });
 }
 /* ---------- XP / level / target mingguan (murni dari riwayat lokal) ---------- */
 function xpTotal(){
@@ -394,7 +432,7 @@ function histStatusPill(h){
   return h.status==="COMPLETED"?'<span class="badge ok">● Selesai</span>':h.status==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':'<span class="badge err">● Dihentikan</span>';
 }
 function histUlangi(h){
-  var to = h.subject==="lengkap" ? "#/setup-lengkap" : h.mode==="kuis" ? "#/kuis?subject="+h.subject : h.mode==="tts" ? "#/tts?subject="+h.subject : "#/setup?subject="+h.subject;
+  var to = h.subject==="lengkap" ? "#/setup-lengkap" : h.subject==="campuran" ? "#/kustom" : h.mode==="kuis" ? "#/kuis?subject="+h.subject : h.mode==="tts" ? "#/tts?subject="+h.subject : "#/setup?subject="+h.subject;
   return '<a class="btn btn-sm" href="'+to+'">⟳ Ulangi</a>';
 }
 function histRow(h, actions){
@@ -407,6 +445,97 @@ function histRow(h, actions){
     +'<div class="hist-act">'+histStatusPill(h)+act+'</div></div>';
 }
 function histItem(h){ return histRow(h); }
+
+/* ================= LATIHAN KUSTOM — PAKET CAMPURAN ================= */
+var KUSTOM_COUNTS=[10,20,30,50];
+function vKustom(){
+  S.kustom=S.kustom||{subjects:["matematika","bindo","binggris","produktif","pkwu"],count:20,mode:(window.TKAStore.getSettings().lastMode||window.TKA_TIME.defaultMode),minutes:null};
+  var k=S.kustom;
+  if(!window.TKA_TIME.modes[k.mode]) k.mode=window.TKA_TIME.defaultMode;
+  var per=Math.max(2,Math.floor(k.count/k.subjects.length));
+  var sugMin=window.presetMinutes(k.count,k.mode);
+  if(k.minutes==null) k.minutes=sugMin;
+  var subjRow=window.TKA_CONFIG.subjects.map(function(s){
+    var on=k.subjects.indexOf(s.id)!==-1;
+    return '<button class="radio-pill'+(on?" sel":"")+'" data-ksub="'+s.id+'">'+esc(s.short||s.name)+(on?" ✓":"")+'</button>';
+  }).join("");
+  view.innerHTML='<a href="#/mapel?mode=ujian" class="btn btn-sm">← Pilih Mapel</a>'
+    +'<div class="cat-eyebrow">PAKET FLEKSIBEL <span>• Campuran Multi-Mapel</span></div>'
+    +'<div class="section-title big">Latihan Kustom — Paket Campuran</div>'
+    +'<p class="hint">Pilih kombinasi mapel, jumlah soal, dan timer. Semua soal diacak jadi satu sesi dengan satu timer.</p>'
+    +'<div class="two-col"><div class="card pad">'
+    +'<label class="lbl">Mapel (min. 1)</label><div class="radio-row" id="kSubs">'+subjRow+'</div>'
+    +'<label class="lbl">Total Soal</label><div class="radio-row" id="kCount">'
+    +KUSTOM_COUNTS.map(function(c){return '<button class="radio-pill'+(c===k.count?" sel":"")+'" data-c="'+c+'">'+c+'</button>';}).join("")
+    +'</div><label class="lbl">Mode Waktu</label><div class="mode-grid" id="kMode">'
+    +Object.keys(window.TKA_TIME.modes).map(function(m){
+      return '<button class="mode-card'+(m===k.mode?" sel":"")+'" data-mode="'+m+'"><b>Mode '+window.TKA_TIME.modes[m].label+'</b>'
+        +'<span class="mode-time">'+window.presetMinutes(k.count,m)+' mnt</span></button>';
+    }).join("")
+    +'</div><label class="lbl">Waktu (menit) — dapat diubah</label><input type="number" id="kMin" min="1" max="600" value="'+k.minutes+'">'
+    +'<p class="hint" id="kAvg"></p>'
+    +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="kAgree" style="width:18px;height:18px;margin-top:2px"> Saya memahami aturan simulasi dan siap masuk fullscreen.</label>'
+    +'<div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-primary" id="kStart" disabled>Mulai Paket Campuran ▶</button></div>'
+    +'</div><div class="card pad"><b>Ringkasan Paket</b><p class="hint" id="kSum"></p>'
+    +'<p class="hint">Soal tiap mapel diambil acak (statis + angka-acak), lalu diacak ulang jadi satu urutan. Satu timer total, Daftar Soal dikelompokkan per mapel, hasil berisi nilai gabungan + per mapel.</p></div></div>';
+  function refreshAvg(){
+    var m=Math.max(1,Math.min(600,parseInt(document.getElementById("kMin").value,10)||sugMin));
+    S.kustom.minutes=m;
+    document.getElementById("kAvg").innerHTML='Rata-rata: <b>'+fmtAvgSec(m*60/k.count)+'</b> per soal ('+m+' menit / '+k.count+' soal).';
+    var per2=Math.max(2,Math.floor(k.count/k.subjects.length));
+    document.getElementById("kSum").textContent=k.subjects.map(function(sid){
+      var avail=window.TKAStore.getBank(sid).length+(window.dynamicCap?window.dynamicCap(sid):0);
+      return window.subjectName(sid)+": ±"+Math.min(per2,avail)+" soal";
+    }).join(" • ");
+  }
+  view.querySelectorAll("#kSubs [data-ksub]").forEach(function(b){
+    b.onclick=function(){
+      var id=b.getAttribute("data-ksub"), i=k.subjects.indexOf(id);
+      if(i!==-1){ if(k.subjects.length>1) k.subjects.splice(i,1); else { toast("Minimal 1 mapel."); return; } }
+      else k.subjects.push(id);
+      window.TKASound.click(); vKustom();
+    };
+  });
+  view.querySelectorAll("#kCount [data-c]").forEach(function(b){
+    b.onclick=function(){ k.count=+b.getAttribute("data-c"); k.minutes=window.presetMinutes(k.count,k.mode); window.TKASound.click(); vKustom(); };
+  });
+  view.querySelectorAll("#kMode [data-mode]").forEach(function(b){
+    b.onclick=function(){ k.mode=b.getAttribute("data-mode"); k.minutes=window.presetMinutes(k.count,k.mode); window.TKASound.click(); vKustom(); };
+  });
+  document.getElementById("kMin").oninput=refreshAvg;
+  refreshAvg();
+  document.getElementById("kAgree").onchange=function(e){ document.getElementById("kStart").disabled=!e.target.checked; };
+  document.getElementById("kStart").onclick=function(){ beginSimulationCampuran(); };
+}
+function beginSimulationCampuran(){
+  var k=S.kustom; if(!k||!k.subjects.length) return;
+  var per=Math.max(1,Math.floor(k.count/k.subjects.length));
+  var specs=k.subjects.map(function(sid){return {subject:sid,count:per};});
+  var built=window.TKAEngine.buildSessionCampuran(specs);
+  if(built.error){ toast(built.error); return; }
+  var ses=built.session;
+  var mins=Math.max(1,Math.min(600,parseInt(k.minutes,10)||window.presetMinutes(k.count,k.mode)));
+  ses.durationMs=mins*60*1000;
+  ses.totalMs=ses.durationMs;
+  ses.mode=(k.mode&&window.TKA_TIME.modes[k.mode])?k.mode:window.TKA_TIME.defaultMode;
+  ses.endTime=Date.now()+ses.durationMs;
+  ses.requestedCount=k.count;
+  S.session=ses;
+  S.leaveGuard={ route:"#/simulasi",
+    message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
+    onQuit:function(){ finishSession("COMPLETED"); } };
+  persistActive();
+  history.pushState(null,"",location.href);
+  window.TKAEngine.enterFullscreen().then(function(){
+    S.fullscreenExpected = !!document.fullscreenElement;
+    if(!S.fullscreenExpected) toast("Fullscreen tidak diizinkan browser — simulasi tetap berjalan.");
+    location.hash="#/simulasi";
+  }).catch(function(){
+    S.fullscreenExpected=false;
+    location.hash="#/simulasi";
+  });
+  setTimeout(function(){ if(S.session&&location.hash!=="#/simulasi") location.hash="#/simulasi"; },800);
+}
 
 /* ================= SETUP TKA LENGKAP (5 mapel berurutan) ================= */
 /* ============ SETUP TKA LENGKAP — paket resmi otomatis ============ */
@@ -749,10 +878,12 @@ function renderSim(){
   var answeredCount=ses.questions.filter(function(x){return qAnswered(x)}).length;
 
   var isLast = (idx === total - 1);
-  var blk = window.TKAEngine.blockOf(ses, idx);
-  var isBlockLast = (idx === blk.start + blk.count - 1);
-  var qNo = idx - blk.start + 1; // nomor dalam blok/mapel
-  var bq = ses.blocks ? ses.blocks[blk.i].questions : ses.questions;
+  var mix = !!ses.customMix;
+  var blk = mix ? {i:0, subject:q.subject, start:0, count:total}
+                : window.TKAEngine.blockOf(ses, idx);
+  var isBlockLast = !mix && (idx === blk.start + blk.count - 1);
+  var qNo = mix ? idx+1 : idx - blk.start + 1; // campuran: nomor global
+  var bq = mix ? ses.questions : (ses.blocks ? ses.blocks[blk.i].questions : ses.questions);
   var ansBlock = bq.filter(function(x){return qAnswered(x)}).length;
   var marked = qMarked(q.id);
   var bobot = Math.max(1, Math.round(100/total));
@@ -789,21 +920,22 @@ function renderSim(){
   var mainBtn;
   if(isLast){
     mainBtn = '<button class="btn btn-primary" id="btnFinish">Selesai</button>';
-  } else if(ses.blocks && isBlockLast){
+  } else if(ses.blocks && !mix && isBlockLast){
     mainBtn = '<button class="btn btn-primary" id="btnFinishBlock">Selesaikan Bagian</button>';
   } else {
     mainBtn = '<button class="btn btn-primary" id="btnNext">Selanjutnya (Simpan) ›</button>';
   }
 
   closeNavPanel();
-  var blockDur=(ses.blocks&&(ses.blocks[blk.i]||{}).durationMs)||ses.totalMs||ses.durationMs||1;
+  var blockDur=mix ? (ses.totalMs||ses.durationMs||1)
+    : ((ses.blocks&&(ses.blocks[blk.i]||{}).durationMs)||ses.totalMs||ses.durationMs||1);
   var totalAll=ses.totalMs||ses.durationMs||blockDur;
   var frac0=remain/blockDur;
   var timerCls=frac0<=window.TKA_TIME.dangerAt?" danger":frac0<=window.TKA_TIME.warnAt?" warn":"";
   var budgetPace=fmtAvgSec(totalAll/1000/(total||1));
-  var modeBadge=ses.blocks? "BAGIAN "+(blk.i+1) : esc(window.timeModeLabel(ses.mode));
-  var headTitle = ses.blocks
-    ? 'SIMULASI TKA • '+esc(window.subjectName(blk.subject))
+  var modeBadge=mix? esc(window.timeModeLabel(ses.mode)) : (ses.blocks? "BAGIAN "+(blk.i+1) : esc(window.timeModeLabel(ses.mode)));
+  var headTitle = mix ? 'PAKET CAMPURAN'
+    : ses.blocks ? 'SIMULASI TKA • '+esc(window.subjectName(blk.subject))
     : 'SIMULASITKA • '+esc(window.subjectName(blk.subject));
   view.innerHTML=
     '<div class="exam-top"><div class="exam-title">'
@@ -821,18 +953,29 @@ function renderSim(){
     +'<p class="hint">'+footHint+'</p>'
     +'<div class="exam-foot"><button class="btn'+(marked?" mark-on":"")+'" id="btnMark">⚑ '+(marked?"Ragu-Ragu Ditandai":"Ragu-Ragu")+'</button>'
     +'<span style="flex:1"></span>'
-    +'<button class="btn" id="btnPrev"'+((idx===0||(ses.blocks&&idx===blk.start))?" disabled":"")+'>‹ Sebelumnya</button>'
+    +'<button class="btn" id="btnPrev"'+((idx===0||(ses.blocks&&!mix&&idx===blk.start))?" disabled":"")+'>‹ Sebelumnya</button>'
     + mainBtn +'</div>'
     +'</div>'
     +'<aside class="exam-side'+(S.navPanelOpen?" open":"")+'" id="examSide" aria-label="Navigasi Daftar Soal">'
     +'<div class="exam-side-head"><div><b>Navigasi Daftar Soal</b><div class="hint">Klik nomor soal untuk langsung berpindah</div></div><button class="btn btn-sm" id="sideClose">✕</button></div>'
     +'<div class="legend legend-box"><span><i class="dot" style="background:var(--accent)"></i>Aktif (#'+qNo+')</span><span><i class="dot" style="background:var(--green)"></i>Terjawab</span><span><i class="dot" style="background:#eab308"></i>Ragu-ragu</span><span><i class="dot" style="background:#fff;border:1px solid #b9cdf0"></i>Belum dijawab</span></div>'
     +'<div class="num-grid" id="sideGrid">'
-    + bq.map(function(x,k){
+    + (mix
+      ? ses.blocks.map(function(b){
+          var nums=b.questions.map(function(x){
+            var gi=ses.questions.indexOf(x);
+            var no=ses.questions.slice(0,gi+1).filter(function(y){return y.subject===b.subject;}).length;
+            return navNumBtn(x, gi, no, window.subjectName(b.subject));
+          }).join("");
+          var ansB=b.questions.filter(function(x){return qAnswered(x)}).length;
+          return '<div class="navblock" style="grid-column:1/-1"><div class="navblock-head"><b>'+esc(window.subjectName(b.subject))+'</b><span>'+ansB+'/'+b.questions.length+'</span></div>'
+            +'<div class="num-grid" style="margin-top:6px">'+nums+'</div></div>';
+        }).join("")
+      : bq.map(function(x,k){
         return navNumBtn(x, blk.start+k, k+1, window.subjectName(blk.subject));
-      }).join("")
+      }).join(""))
     +'</div>'
-    +'<button class="btn btn-finish-red" id="btnFinishDrawer">✓ SELESAIKAN &amp; KUMPULKAN '+(ses.blocks?"BAGIAN":"UJIAN")+'</button>'
+    +'<button class="btn btn-finish-red" id="btnFinishDrawer">✓ SELESAIKAN &amp; KUMPULKAN '+(ses.blocks&&!mix?"BAGIAN":"UJIAN")+'</button>'
     +'</aside></div>'
     +'<div class="exam-bottom"><div class="jump-bar"><span class="hint">LOMPAT:</span><span id="jumpNums">'
     + bq.slice(0,10).map(function(x,k){
@@ -890,7 +1033,7 @@ function renderSim(){
   var pv=document.getElementById("btnPrev");
   if(pv) pv.onclick=function(){
     var ses=S.session, blo=window.TKAEngine.blockOf(ses, ses.currentIndex);
-    var minIdx=(ses.blocks?blo.start:0);
+    var minIdx=(ses.blocks&&!ses.customMix?blo.start:0);
     if(S.session.currentIndex>minIdx){S.session.currentIndex--; persistActive(); renderSim();}
   };
   var nxb=document.getElementById("btnFinishBlock");
@@ -1031,7 +1174,7 @@ function vHasil(){
   var headPill=reasonId==="TIMEOUT"
     ? '<span class="badge warn">⏱ Waktu Habis - Perlu Peningkatan</span>'
     : tuntas? '<span class="badge ok">✓ Selesai - Kompeten</span>' : '<span class="badge warn">Selesai - Perlu Peningkatan</span>';
-  var redoTo=r.subject==="lengkap"?"#/setup-lengkap":"#/setup?subject="+r.subject;
+  var redoTo=r.subject==="lengkap"?"#/setup-lengkap":r.subject==="campuran"?"#/kustom":"#/setup?subject="+r.subject;
   // Efisiensi 1–4 dari jawaban + kecepatan + nilai
   var paceOk=budget?avg<=budget:true;
   var effLvl=(answeredPct>=95&&paceOk&&r.nilai>=75)?4:(answeredPct>=80&&paceOk)?3:answeredPct>=60?2:1;
@@ -1148,7 +1291,7 @@ function vReview(id){
   }
   // Kelompokkan per mapel untuk TKA Lengkap
   var groups;
-  if(r.subject==="lengkap" && r.breakdown){
+  if(r.breakdown){
     groups=r.breakdown.map(function(b){
       return { title:window.subjectName(b.subject),
                qs:r.questions.filter(function(q){return q.subject===b.subject;}) };

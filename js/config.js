@@ -25,6 +25,7 @@ window.TKA_CONFIG = {
 };
 window.subjectName = function(id){
   if(id==="lengkap") return "TKA Lengkap";
+  if(id==="campuran") return "Paket Campuran";
   var s = (window.TKA_CONFIG.subjects||[]).find(function(x){return x.id===id});
   return s ? s.name : id;
 };
