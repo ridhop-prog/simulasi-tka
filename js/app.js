@@ -729,6 +729,17 @@ function blockTimeout(){
   enterBreak(true);
 }
 function qHtml(t){ return esc(t).replace(/(\d+(?:[.,]\d+)?)/g,'<span class="qnum">$1</span>'); }
+// Sorot bagian ber-tanda-kutip pada pernyataan B/S (biru). Sekali jalan agar
+// span yang disisipkan tidak diproses ulang. Dilewati bila jumlah kutip ganjil.
+function bsQ(t){
+  var s=esc(t);
+  var sq=(s.match(/'/g)||[]).length, dq=(s.match(/"/g)||[]).length;
+  function wrap(m){ return '<span class="bs-q">'+m+'</span>'; }
+  if(sq%2===0 && dq%2===0) return s.replace(/'[^']+'|"[^"]+"/g, wrap);
+  if(sq%2===0) return s.replace(/'[^']+'/g, wrap);
+  if(dq%2===0) return s.replace(/"[^"]+"/g, wrap);
+  return s;
+}
 function renderSim(){
   var ses=S.session; if(!ses) return;
   var idx=ses.currentIndex;
@@ -766,14 +777,13 @@ function renderSim(){
     footHint="ⓘ Bisa pilih lebih dari satu. Nilai penuh hanya jika kombinasi tepat semua.";
   } else if(q.type==="true_false_table"){
     var ans=(ses.answers[q.id]||{});
-    body='<table class="tf-table"><tr><th>Pernyataan</th><th style="text-align:center">Benar</th><th style="text-align:center">Salah</th></tr>'
+    body='<div class="bs-wrap"><div class="bs-head"><span></span><span></span><span class="bs-pill benar">✓ BENAR</span><span class="bs-pill salah">✕ SALAH</span></div>'
       +q.statements.map(function(st,i){
         var v=ans[i];
-        return '<tr><td>'+esc(st.text)+'</td>'
-          +'<td class="c"><button class="tf-btn'+(v==="true"?" sel":"")+'" data-tf="'+i+':true">'+(v==="true"?"✓":"○")+'</button></td>'
-          +'<td class="c"><button class="tf-btn'+(v==="false"?" sel":"")+'" data-tf="'+i+':false">'+(v==="false"?"✓":"○")+'</button></td></tr>';
-      }).join("")+'</table>';
-    footHint="ⓘ Setiap baris hanya satu pilihan. Klik untuk memberi tanda ✓.";
+        return '<div class="bs-row"><span class="bs-no">'+(i+1)+'.</span><span class="bs-text">'+bsQ(st.text)+'</span>'
+          +'<span class="bs-cell"><button class="bs-btn'+(v==="true"?" sel-b":"")+'" data-tf="'+i+':true">'+(v==="true"?"✓":"○")+'</button></span>'
+          +'<span class="bs-cell"><button class="bs-btn'+(v==="false"?" sel-s":"")+'" data-tf="'+i+':false">'+(v==="false"?"✓":"○")+'</button></span></div>';
+      }).join("")+'</div>';
   }
 
   var mainBtn;

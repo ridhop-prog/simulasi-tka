@@ -201,6 +201,22 @@ pre.ex{background:#f4f8fe;border:1px solid var(--line);border-radius:12px;paddin
 .tf-table td.c{text-align:center;width:90px}
 .tf-btn{border:1.5px solid #b9cdf0;background:#fff;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:15px;line-height:1;color:#8aa3c7}
 .tf-btn.sel{background:var(--green);border-color:var(--green);color:#fff}
+/* ===== Benar/Salah model kartu bernomor ===== */
+.bs-wrap{background:#f4f8fe;border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.bs-head,.bs-row{display:grid;grid-template-columns:34px minmax(0,1fr) 86px 86px;gap:8px;align-items:center}
+.bs-head{padding:2px 10px 0}
+.bs-pill{display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:11px;font-weight:800;letter-spacing:.4px;padding:5px 10px;border-radius:999px}
+.bs-pill.benar{background:#d9f2e3;color:#14703c}
+.bs-pill.salah{background:#fbdfe4;color:#c22747}
+.bs-row{background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 10px}
+.bs-no{font-weight:800;color:var(--ink);font-size:14px}
+.bs-text{font-size:14px;line-height:1.6;min-width:0;overflow-wrap:anywhere}
+.bs-q{color:var(--accent);font-weight:700}
+.bs-cell{display:flex;justify-content:center}
+.bs-btn{width:30px;height:30px;border-radius:50%;border:2px solid #c3d2e8;background:#fff;color:#9db1cc;font-size:14px;cursor:pointer;line-height:1;font-family:inherit;transition:.13s}
+.bs-btn:hover{border-color:var(--accent)}
+.bs-btn.sel-b{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 3px 8px rgba(21,154,76,.4)}
+.bs-btn.sel-s{background:#e11d48;border-color:#e11d48;color:#fff;box-shadow:0 3px 8px rgba(225,29,72,.4)}
 .sim-nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
 .sim-nav .spacer{flex:1}
 .sim-single{max-width:840px;margin:0 auto}
@@ -355,6 +371,12 @@ table.mini th{background:#f2f6fd}
   .tf-table{font-size:13px;min-width:440px}
   .tf-table th,.tf-table td{padding:8px}
   .tf-table td.c{width:64px}
+  .bs-head,.bs-row{grid-template-columns:26px minmax(0,1fr) 60px 60px;gap:6px}
+  .bs-wrap{padding:8px;gap:6px}
+  .bs-row{padding:9px 8px}
+  .bs-text{font-size:13px}
+  .bs-pill{font-size:10px;padding:4px 6px}
+  .bs-btn{width:34px;height:34px}
   .tf-btn{width:36px;height:36px;font-size:16px}
   table.mini{font-size:12px;min-width:440px}
   table.mini th,table.mini td{padding:6px 8px}
