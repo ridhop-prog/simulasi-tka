@@ -765,14 +765,14 @@ function renderSim(){
     var cur=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur.indexOf(o.id)!==-1;
-      return '<label class="ropt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="radio"></span><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Terpilih</span></label>';
+      return '<label class="ropt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓</span></label>';
     }).join("");
     footHint="ⓘ Pilih satu jawaban yang tepat. Jawaban tersimpan otomatis saat memilih.";
   } else if(q.type==="multiple_select"){
     var cur2=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur2.indexOf(o.id)!==-1;
-      return '<label class="ropt multi'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Dipilih</span></label>';
+      return '<label class="ropt multi'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="box"></span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Terpilih</span></label>';
     }).join("");
     footHint="ⓘ Bisa pilih lebih dari satu. Nilai penuh hanya jika kombinasi tepat semua.";
   } else if(q.type==="true_false_table"){
