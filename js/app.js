@@ -984,6 +984,18 @@ function evaluasiWaktu(r){
 }
 
 /* ================= HASIL ================= */
+function fmtDurShort(ms){
+  var s=Math.max(0,Math.round(ms/1000)), m=Math.floor(s/60); s=s%60;
+  return m>0? m+"m "+s+"s" : s+"s";
+}
+var KKM_NILAI=75;
+function donut(pct){
+  var C=(2*Math.PI*34).toFixed(1);
+  var v=Math.max(0,Math.min(100,Math.round(pct)));
+  var col=v>=75?"#159a4c":"#f59e0b";
+  return '<div class="donut-wrap"><svg class="donut" viewBox="0 0 84 84"><circle cx="42" cy="42" r="34" fill="none" stroke="#e8effa" stroke-width="10"/><circle cx="42" cy="42" r="34" fill="none" stroke="'+col+'" stroke-width="10" stroke-linecap="round" stroke-dasharray="'+(v/100*2*Math.PI*34).toFixed(1)+' '+C+'" transform="rotate(-90 42 42)"/></svg>'
+    +'<div class="donut-c"><b>'+v+'</b><span>/100<br>'+v+'% Akurasi</span></div></div>';
+}
 function vHasil(){
   var r=S.lastResult;
   if(!r){
@@ -994,37 +1006,105 @@ function vHasil(){
   if(!r){ view.innerHTML='<div class="card pad">Belum ada hasil. <a class="btn btn-primary" href="#/">Ke Beranda</a></div>'; return; }
   var reason = r.finishReason||"COMPLETED";
   var reasonId = reason==="COMPLETED"?"COMPLETED":reason==="TIMEOUT"?"TIMEOUT":reason==="TAB_SWITCH"?"TAB_SWITCH":"FULLSCREEN_EXIT";
-  var badge = reasonId==="COMPLETED"?'<span class="badge ok">Selesai</span>':reasonId==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':reasonId==="TAB_SWITCH"?'<span class="badge err">TERMINATED_TAB_SWITCH</span>':'<span class="badge err">TERMINATED_FULLSCREEN_EXIT</span>';
+  var reasonTxt = reasonId==="TIMEOUT"?"durasi waktu habis"
+    : reasonId==="FULLSCREEN_EXIT"?"keluar dari fullscreen"
+    : reasonId==="TAB_SWITCH"?"beralih aplikasi/tab lain"
+    : "kamu menekan Selesai";
   var byType={};
   r.questions.forEach(function(q){
-    byType[q.type]=byType[q.type]||{t:0,c:0};
+    byType[q.type]=byType[q.type]||{t:0,c:0,w:0};
     byType[q.type].t++;
     if(window.TKAEngine.isCorrect(q, r.answers[q.id])) byType[q.type].c++;
+    else if(window.TKAEngine.isAnswered(q, r.answers[q.id])) byType[q.type].w++;
   });
-  var typeRows=Object.keys(byType).map(function(t){return '<tr><td>'+esc(typeLabel(t))+'</td><td>'+byType[t].c+'/'+byType[t].t+'</td></tr>'}).join("");
   var modeLbl=(r.subject==="lengkap"||r.mode==="lengkap")?"TKA Lengkap":window.timeModeLabel(r.mode);
-  var avgTxt=fmtAvgSec(r.avgSecPerQ||0), budgetTxt=fmtAvgSec(r.budgetSecPerQ||0);
+  var avg=r.avgSecPerQ||0, budget=r.budgetSecPerQ||0;
+  var avgTxt=fmtAvgSec(avg), budgetTxt=fmtAvgSec(budget);
   var answeredN=r.total-(r.empty||0);
-  var evalHtml=evaluasiWaktu(r);
-  view.innerHTML='<div class="card result-hero"><div class="q-meta" style="justify-content:center"><span class="q-num">HASIL SIMULASI</span><span class="badge">'+esc(window.subjectName(r.subject))+'</span><span class="badge">Mode '+esc(modeLbl)+'</span>'+badge+'</div>'
-    +'<h2 style="margin:8px 0 0">'+esc(window.subjectName(r.subject))+'</h2>'
-    +'<div class="score-big">'+r.nilai+'</div>'
-    +'<div class="hint">Nilai • '+r.correct+' benar dari '+r.total+' soal</div>'
-    +'<div class="result-grid" style="text-align:left">'
-    +'<div class="card pad"><b>'+r.correct+'</b><br><span class="hint">Benar</span></div>'
-    +'<div class="card pad"><b>'+r.wrong+'</b><br><span class="hint">Salah</span></div>'
-    +'<div class="card pad"><b>'+r.empty+'</b><br><span class="hint">Tidak dijawab</span></div>'
-    +'<div class="card pad"><b>'+esc(fmtDur(r.durationMs))+'</b><br><span class="hint">Total waktu</span></div>'
-    +'<div class="card pad"><b>'+esc(avgTxt)+'</b><br><span class="hint">Rata-rata /soal</span></div>'
-    +'<div class="card pad"><b>'+esc(modeLbl)+'</b><br><span class="hint">Mode waktu</span></div></div>'
-    +'<table class="mini"><tr><th>Jumlah soal</th><td>'+r.total+'</td></tr><tr><th>Persentase</th><td>'+r.nilai+'%</td></tr><tr><th>Waktu pengerjaan</th><td>'+esc(fmtDur(r.durationMs))+' • '+fmtDate(r.date)+'</td></tr><tr><th>Rata-rata waktu per soal</th><td>'+esc(avgTxt)+' (target ≤ '+esc(budgetTxt)+')</td></tr><tr><th>Soal terjawab</th><td>'+answeredN+'/'+r.total+'</td></tr><tr><th>Mode yang digunakan</th><td>'+esc(modeLbl)+'</td></tr><tr><th>Alasan selesai</th><td>'+reasonId+'</td></tr><tr><th>Status</th><td>'+esc(r.status)+'</td></tr></table>'
-    +evalHtml
-    +'<table class="mini"><tr><th>Tipe soal</th><th>Benar/Total</th></tr>'+typeRows+'</table>'
-    +(r.breakdown? '<table class="mini"><tr><th>Bagian</th><th>Benar</th><th>Nilai</th></tr>'
+  var answeredPct=r.total?Math.round(answeredN/r.total*100):0;
+  var okPct=r.total?Math.round(r.correct/r.total*100):0;
+  var wrongPct=r.total?Math.round(r.wrong/r.total*100):0;
+  var emptyPct=r.total?Math.round((r.empty||0)/r.total*100):0;
+  var tuntas=r.nilai>=KKM_NILAI;
+  var defisit=r.nilai-KKM_NILAI;
+  var verdict=r.correct===0?"Belum Ada Soal Terjawab Benar":tuntas?"Kompeten — Pertahankan!":"Belum Tuntas, Butuh Remedial";
+  var headPill=reasonId==="TIMEOUT"
+    ? '<span class="badge warn">⏱ Waktu Habis - Perlu Peningkatan</span>'
+    : tuntas? '<span class="badge ok">✓ Selesai - Kompeten</span>' : '<span class="badge warn">Selesai - Perlu Peningkatan</span>';
+  var redoTo=r.subject==="lengkap"?"#/setup-lengkap":"#/setup?subject="+r.subject;
+  // Efisiensi 1–4 dari jawaban + kecepatan + nilai
+  var paceOk=budget?avg<=budget:true;
+  var effLvl=(answeredPct>=95&&paceOk&&r.nilai>=75)?4:(answeredPct>=80&&paceOk)?3:answeredPct>=60?2:1;
+  var effTxt=["","Perlu Latihan Kecepatan","Kurang Efisien","Cukup Efisien","Sangat Efisien"][effLvl];
+  var effNote=["","Fokus pada scanning cepat teks bacaan","Kurangi waktu per soal yang macet","Pertahankan ritme ini","Pertahankan konsistensi"][effLvl];
+  var usedPct=r.totalMs?Math.min(100,Math.round(r.durationMs/r.totalMs*100)):100;
+  var deltaSec=Math.round(avg-budget);
+  // Tipe terlemah → rekomendasi materi
+  var typeName={multiple_choice:"Pilihan Ganda Tunggal",multiple_select:"Pilihan Ganda Kompleks",true_false_table:"Tabel Benar / Salah"};
+  var weak=null, weakRate=101;
+  Object.keys(byType).forEach(function(t){
+    var rate=byType[t].t?byType[t].c/byType[t].t*100:100;
+    if(rate<weakRate){weakRate=rate;weak=t;}
+  });
+  var skillMap={
+    multiple_choice:{s:"Strategy eliminasi opsi dan baca cepat untuk tipe pilihan ganda.",p:["Eliminasi Opsi","Baca Cepat","Kata Kunci"]},
+    multiple_select:{s:"Analisis semua opsi satu per satu sebelum mengunci jawaban kompleks.",p:["Cek Semua Opsi","Pahami Konsep","Hindari Menebak"]},
+    true_false_table:{s:"Nilai tiap pernyataan secara mandiri dan teliti.",p:["Baris per Baris","Teliti Kata","Tetap Tenang"]}
+  };
+  var sk=skillMap[weak]||skillMap.multiple_choice;
+  var violated=(reasonId==="FULLSCREEN_EXIT"||reasonId==="TAB_SWITCH");
+  var causePill=reasonId==="TIMEOUT"?'<span class="badge err">⏱ Timeout (Waktu Otomatis Habis)</span>'
+    : violated?'<span class="badge err">✕ '+esc(r.status)+'</span>'
+    :'<span class="badge ok">✓ Selesai Manual</span>';
+  view.innerHTML='<div class="eval-top"><span class="badge" style="background:#1f6feb;color:#fff;border-color:#1f6feb">LAPORAN EVALUASI</span><span class="hint">SMK PPLG / Rekayasa Perangkat Lunak</span><span class="badge">'+esc(modeLbl)+' CBT</span></div>'
+    +'<div class="eval-head"><div><h2 style="margin:0">Ujian Selesai: '+esc(window.subjectName(r.subject))+'</h2>'
+    +'<p class="hint">Sesi simulasi telah berakhir karena '+reasonTxt+'. Teliti hasil analisis di bawah untuk persiapan remedial atau ujian sesungguhnya.</p></div>'
+    +'<div class="eval-status"><span class="hint">Status Evaluasi:</span><br>'+(tuntas?'<span class="badge ok">● Tuntas</span>':'<span class="badge warn">● Perlu Peningkatan</span>')+'</div></div>'
+    +'<div class="card eval-hero"><div class="eval-hero-l">'+donut(r.nilai)
+    +'<div class="hint" style="text-align:center">SKOR AKHIR</div></div>'
+    +'<div class="eval-hero-m">'+headPill+'<h3 style="margin:8px 0 4px">'+verdict+'</h3>'
+    +'<p class="hint">'+answeredN+' dari '+r.total+' butir soal berhasil dikonfirmasi. Jangan berkecil hati, jadikan hasil ini bahan evaluasi strategi waktu Anda.</p>'
+    +'<div class="hint">🟢 KKM Minimum: '+KKM_NILAI+'.00 &nbsp;•&nbsp; '+(defisit>=0?'<b style="color:var(--green)">Surplus: +'+defisit+'.00</b>':'<b style="color:var(--red)">Defisit: '+defisit+'.00</b>')+'</div></div>'
+    +'<div class="eval-hero-r"><b>AKSI REKOMENDASI</b><a class="btn btn-primary" href="#/review?id='+r.id+'">Pelajari Kunci Jawaban →</a><a class="btn" href="'+redoTo+'">Coba Ujian Ulang ⟳</a></div></div>'
+    +'<div class="section-title">📊 Statistik Performa Utama <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">Total '+r.total+' Soal</span></div>'
+    +'<div class="eval-stats">'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico ok">✓</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">'+okPct+'% Rata</span></div><b>'+r.correct+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>JAWABAN BENAR</b><br>Target ketuntasan minimal '+Math.ceil(r.total*KKM_NILAI/100)+' soal</div></div>'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico err">✕</span><span class="stat-tag" style="background:#fdecec;color:#b91c1c">'+wrongPct+'% Terjawab Salah</span></div><b>'+r.wrong+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>JAWABAN SALAH</b><br>'+(r.wrong? "Pelajari pembahasan soal-soal ini":"Tidak ada jawaban keliru 🎉")+'</div></div>'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico warn">○</span><span class="stat-tag" style="background:#fdf1de;color:#8a5a00">'+emptyPct+'% Tidak Dijawab</span></div><b>'+(r.empty||0)+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>KOSONG'+(reasonId==="TIMEOUT"?'/TIMEOUT':"")+'</b><br>'+(reasonId==="TIMEOUT"?"Soal hangus otomatis akibat batas waktu":"Soal dilewati tanpa jawaban")+'</div></div>'
+    +'</div>'
+    +'<div class="eval-stats">'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="stat-label">TOTAL WAKTU DIGUNAKAN</span>'+(reasonId==="TIMEOUT"?'<span class="stat-tag" style="background:#fdecec;color:#b91c1c">⏱ Timeout</span>':"")+'</div><div class="stat-num"><b>'+fmtDurShort(r.durationMs)+'</b></div><div class="stat-bar red"><i style="width:'+usedPct+'%"></i></div><div class="stat-foot">Batas alokasi '+fmtDurShort(r.totalMs||r.durationMs)+' ('+usedPct+'% terpakai)</div></div>'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="stat-label">RATA-RATA WAKTU / SOAL</span><span class="stat-tag" style="background:'+(paceOk?"#e4f6eb;color:#14703c":"#fdecec;color:#b91c1c")+'">'+(paceOk?"dalam target":(deltaSec>0?"+":"")+deltaSec+" dtk melebihi target")+'</span></div><div class="stat-num"><b>'+avgTxt+'</b><span class="stat-unit">/soal</span></div><div class="stat-foot">'+(paceOk?"Pace pengerjaan baik":"Pace pengerjaan sedikit lambat")+'<br>Target ≤ '+budgetTxt+'</div></div>'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="stat-label">EFISIENSI PENGERJAAN</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">Mode '+esc(modeLbl)+'</span></div><div class="stat-num"><b style="font-size:20px">'+effTxt+'</b></div><div class="stat-bar"><i style="width:'+(effLvl/4*100)+'%"></i></div><div class="stat-foot">Tingkat '+effLvl+'/4<br>'+effNote+'</div></div>'
+    +'</div>'
+    +'<div class="dash-bottom"><div>'
+    +'<div class="section-title">📝 Rincian Berdasarkan Tipe Soal <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">'+Object.keys(byType).length+' Kategori</span></div>'
+    +'<div class="card pad">'+Object.keys(byType).map(function(t){
+      var d=byType[t], pct=d.t?Math.round(d.c/d.t*100):0;
+      return '<div class="type-row"><div class="target-row"><span><span class="tdot"></span><b>'+esc(typeName[t]||typeLabel(t))+'</b> <span class="hint">('+d.t+' Soal)</span></span><b>'+d.c+' / '+d.t+' <span class="hint">('+pct+'%)</span></b></div>'
+        +'<div class="target-bar"><i style="width:'+pct+'%"></i></div>'
+        +'<div class="hint">'+d.c+' Benar • '+d.w+' Salah</div></div>';
+    }).join("")+'</div>'
+    +'<div class="section-title">⚙ Parameter Teknis Pengerjaan</div>'
+    +'<div class="card pad"><table class="mini param">'
+    +'<tr><td>Total Jumlah Soal</td><td style="text-align:right"><b>'+r.total+' Butir Soal</b></td></tr>'
+    +'<tr><td>Soal Dikonfirmasi (Submit)</td><td style="text-align:right"><b>'+answeredN+' Butir ('+answeredPct+'%)</b></td></tr>'
+    +'<tr><td>Waktu Sesi Dimulai</td><td style="text-align:right">'+fmtDate(r.date-r.durationMs)+'</td></tr>'
+    +'<tr><td>Waktu Sesi Berakhir</td><td style="text-align:right">'+fmtDate(r.date)+'</td></tr>'
+    +'<tr><td>Penyebab Akhir Sesi</td><td style="text-align:right">'+causePill+'</td></tr>'
+    +'<tr><td>Integritas CBT Browser</td><td style="text-align:right">'+(violated?'<span class="badge err">✕ Pelanggaran Terdeteksi</span>':'<span class="badge ok">✓ Terverifikasi Valid (0 Pelanggaran)</span>')+'</td></tr>'
+    +'</table></div>'
+    +(r.breakdown? '<div class="section-title">Nilai per Mapel</div><div class="card pad"><table class="mini"><tr><th>Bagian</th><th>Benar</th><th>Nilai</th></tr>'
       +r.breakdown.map(function(b,i){
         return '<tr><td>'+(i+1)+'. '+esc(window.subjectName(b.subject))+'</td><td>'+b.correct+'/'+b.total+'</td><td><b>'+b.nilai+'</b></td></tr>';
-      }).join("")+'</table>' : "")
-    +'<div style="display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap"><a class="btn btn-primary" href="#/review?id='+r.id+'">Lihat Pembahasan</a><a class="btn" href="#/">Kembali ke Menu</a><a class="btn" href="'+(r.subject==="lengkap"?"#/setup-lengkap":"#/setup?subject="+r.subject)+'">Simulasi Lagi (Soal Baru)</a></div></div>';
+      }).join("")+'</table></div>' : "")
+    +'</div>'
+    +'<div class="card side-panel"><div class="side-head">🤖 Smart CBT Evaluator</div><span class="badge">Analisis Otomatis</span>'
+    +'<div class="tip-box"><b>⏱ Evaluasi Manajemen Waktu</b><br>Rata-rata waktu membaca mencapai '+avgTxt+'/soal. '+(paceOk?"Pertahankan ritme ini dan pakai sisa waktu untuk memeriksa kembali jawaban.":"Kurangi waktu per soal agar seluruh butir sempat dikerjakan sebelum waktu habis.")+'</div>'
+    +'<div class="tip-box"><b>📚 Rekomendasi Materi Belajar</b><br>Untuk simulasi berikutnya dalami: '+esc(sk.s)+'<br><span class="subj-meta" style="margin:8px 0 0">'+sk.p.map(function(p){return '<span class="pill">'+esc(p)+'</span>'}).join("")+'</span></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm" href="#/mapel?mode=kuis">Pelajari Kuis-Kuis</a><a class="btn btn-sm btn-primary" href="'+redoTo+'">Target Latihan Baru</a></div>'
+    +'<p class="hint">Nilai simulasi ini tercatat otomatis di riwayat. Anda dapat melihat kunci jawaban dan pembahasan untuk mengkaji tiap butir soal.</p>'
+    +'</div></div>';
 }
 
 /* ================= REVIEW ================= */
