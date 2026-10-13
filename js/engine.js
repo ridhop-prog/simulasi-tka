@@ -92,7 +92,7 @@
   }
 
   // ===== TKA LENGKAP: sekuens blok per mapel dalam satu sesi =====
-  // specs: [{subject, count}] — tiap blok diacak independen (statis+dinamis)
+  // specs: [{subject, count, minutes?}] — tiap blok diacak independen + timer sendiri
   function buildSessionLengkap(specs){
     var blocks=[], insufficient=false, available=0, dynTotal=0;
     for(var i=0;i<specs.length;i++){
@@ -105,7 +105,8 @@
       if((bank.length+dyn.length)<sp.count) insufficient=true;
       var picked=sampleStatic(bank, sp.subject, take);
       var qs=shuffle(picked.concat(dyn).map(shuffleOptions));
-      blocks.push({subject:sp.subject, questions:qs});
+      blocks.push({subject:sp.subject, questions:qs,
+        durationMs:(sp.minutes||60)*60*1000, count:qs.length});
       available+=bank.length+dyn.length; dynTotal+=dyn.length;
     }
     var flat=[], starts=[];
@@ -116,6 +117,7 @@
       simulationId:"SIM"+now.toString(36).toUpperCase()+Math.floor(rng()*999),
       subject:"lengkap",
       blocks:blocks, blockStarts:starts,
+      blockIdx:0, blockEnd:0, onBreak:false,
       questionIds:flat.map(function(q){return q.id}),
       questions:flat,
       answers:{}, marked:[], currentIndex:0,

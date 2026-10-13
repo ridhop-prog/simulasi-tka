@@ -30,6 +30,15 @@ window.subjectName = function(id){
 };
 // Urutan blok resmi mode TKA Lengkap
 window.LENGKAP_ORDER = ["matematika","bindo","binggris","produktif","pkwu"];
+// Paket resmi TKA Lengkap (fix, otomatis — tanpa konfigurasi user):
+// Wajib: Indo 30/75mnt, Inggris 30/75mnt, MTK 25/75mnt; Pilihan PPLG: 2×25 soal/60mnt
+window.TKA_LENGKAP_PLAN = [
+  {subject:"matematika", count:25, minutes:75},
+  {subject:"bindo",      count:30, minutes:75},
+  {subject:"binggris",   count:30, minutes:75},
+  {subject:"produktif",  count:25, minutes:60},
+  {subject:"pkwu",       count:25, minutes:60}
+];
 
 /* ===== Sistem Waktu Tantangan TKA — SATU konfigurasi terpusat =====
    Angka preset adalah alokasi LATIHAN (bukan klaim alokasi resmi TKA).

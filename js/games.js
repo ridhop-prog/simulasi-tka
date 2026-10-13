@@ -44,6 +44,7 @@ window.learnModeLabel = function(m){
 window.historyModeLabel = function(m){
   if(m==="kuis") return "Tebak-tebakan";
   if(m==="tts") return "TTS";
+  if(m==="lengkap") return "TKA Lengkap";
   return window.timeModeLabel(m||"normal");
 };
 
