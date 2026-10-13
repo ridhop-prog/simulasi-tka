@@ -69,6 +69,17 @@ document.addEventListener("fullscreenchange", function(){
     terminateFullscreenExit();
   }
 });
+// Deteksi pindah aplikasi/tab (Alt+Tab, Win+Tab, klik taskbar, minimize):
+// browser tidak boleh MENCEGAH-nya, tetapi kita mendeteksi + menghentikan ujian.
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden && S.session && S.session.status==="RUNNING"){
+    terminateTabSwitch();
+  }
+});
+// Klik kanan dimatikan selama ujian (mengurangi Inspect/view-source iseng)
+document.addEventListener("contextmenu", function(e){
+  if(S.session && S.session.status==="RUNNING") e.preventDefault();
+});
 window.addEventListener("beforeunload", function(e){
   if(S.session && S.session.status==="RUNNING"){
     window.TKAStore.setActive(S.session);
@@ -87,6 +98,17 @@ window.addEventListener("popstate", function(){
     toast("Permainan sedang berjalan — selesaikan dulu atau keluar lewat tombol.");
   }
 });
+
+function terminateTabSwitch(){
+  if(!S.session || S.session.status!=="RUNNING") return;
+  window.TKAEngine.playAlarm();
+  finishSession("TAB_SWITCH", true);
+  modal('<h3>SIMULASI DIHENTIKAN</h3>'
+    +'<div class="err-box">Terdeteksi beralih aplikasi/tab/desktop lain.<br>Simulasi telah dihentikan secara otomatis.<br><br>Alasan:<br><b>Beralih Aplikasi</b></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" id="mGoResult">Lihat Hasil</button></div>');
+  var b=document.getElementById("mGoResult");
+  if(b) b.onclick=function(){closeModal(); location.hash="#/hasil";};
+}
 
 function terminateFullscreenExit(){
   if(!S.session || S.session.status!=="RUNNING") return;
@@ -140,7 +162,7 @@ function finishSession(reason, fromFullscreen){
   if(typeof closeNavPanel==="function") closeNavPanel();
   S.leaveGuard=null;
   var ses=S.session;
-  ses.status = reason==="COMPLETED" ? "COMPLETED" : (reason==="TIMEOUT"?"TIMEOUT":"TERMINATED_FULLSCREEN_EXIT");
+  ses.status = reason==="COMPLETED" ? "COMPLETED" : reason==="TIMEOUT" ? "TIMEOUT" : reason==="TAB_SWITCH" ? "TERMINATED_TAB_SWITCH" : "TERMINATED_FULLSCREEN_EXIT";
   ses.endTime=Date.now();
   ses.finishReason=reason;
   var sc=window.TKAEngine.score(ses);
@@ -463,6 +485,7 @@ function vInstruksi(){
     +'<li>Gunakan <b>★ Tandai</b> untuk meninjau kembali soal ragu-ragu.</li>'
     +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
     +'<li>Jangan refresh/menutup halaman selama ujian; state disimpan dan ada peringatan browser.</li>'
+    +'<li>Dilarang beralih aplikasi/tab/desktop lain (Alt+Tab dsb.) — terdeteksi = simulasi dihentikan otomatis.</li>'
     +'<li>Klik <b>Selesai</b> pada soal terakhir bila yakin. Waktu habis juga otomatis selesai.</li></ol>'
     +(bankN+dynCapI<p.count?'<div class="warn-box">Bank soal hanya '+bankN+'+'+dynCapI+' angka-acak soal — simulasi memakai '+realN+' soal tanpa duplikasi.</div>':"")
     +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami instruksi dan siap masuk mode fullscreen untuk memulai simulasi.</label>'
@@ -495,6 +518,7 @@ function vInstruksiLengkap(){
     +'<li>Antar-bagian ada <b>jeda</b>: timer berhenti. Tekan “Mulai” untuk mapel berikutnya.</li>'
     +'<li>Jawaban tersimpan otomatis. Nomor <b>[ ]</b>=belum, <b>[✓]</b>=sudah, <b>[★]</b>=ditandai.</li>'
     +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
+    +'<li>Dilarang beralih aplikasi/tab/desktop lain (Alt+Tab dsb.) — terdeteksi = simulasi dihentikan otomatis.</li>'
     +'<li>Klik <b>Selesai</b> di soal terakhir bagian 5. Hasil berisi nilai gabungan + nilai tiap mapel.</li></ol>'
     +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami peraturan dan siap masuk mode fullscreen untuk memulai TKA.</label>'
     +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" id="beginBtn" disabled>Mulai TKA</button></div></div>';
@@ -882,8 +906,8 @@ function vHasil(){
   }
   if(!r){ view.innerHTML='<div class="card pad">Belum ada hasil. <a class="btn btn-primary" href="#/">Ke Beranda</a></div>'; return; }
   var reason = r.finishReason||"COMPLETED";
-  var reasonId = reason==="COMPLETED"?"COMPLETED":reason==="TIMEOUT"?"TIMEOUT":"FULLSCREEN_EXIT";
-  var badge = reasonId==="COMPLETED"?'<span class="badge ok">Selesai</span>':reasonId==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':'<span class="badge err">TERMINATED_FULLSCREEN_EXIT</span>';
+  var reasonId = reason==="COMPLETED"?"COMPLETED":reason==="TIMEOUT"?"TIMEOUT":reason==="TAB_SWITCH"?"TAB_SWITCH":"FULLSCREEN_EXIT";
+  var badge = reasonId==="COMPLETED"?'<span class="badge ok">Selesai</span>':reasonId==="TIMEOUT"?'<span class="badge warn">Waktu Habis</span>':reasonId==="TAB_SWITCH"?'<span class="badge err">TERMINATED_TAB_SWITCH</span>':'<span class="badge err">TERMINATED_FULLSCREEN_EXIT</span>';
   var byType={};
   r.questions.forEach(function(q){
     byType[q.type]=byType[q.type]||{t:0,c:0};
