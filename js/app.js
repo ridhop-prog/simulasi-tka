@@ -728,6 +728,7 @@ function confirmFinishBlock(){
 function blockTimeout(){
   enterBreak(true);
 }
+function qHtml(t){ return esc(t).replace(/(\d+(?:[.,]\d+)?)/g,'<span class="qnum">$1</span>'); }
 function renderSim(){
   var ses=S.session; if(!ses) return;
   var idx=ses.currentIndex;
@@ -735,21 +736,34 @@ function renderSim(){
   var total=ses.questions.length;
   var remain=(ses.blockEnd||ses.endTime)-Date.now();
   var answeredCount=ses.questions.filter(function(x){return qAnswered(x)}).length;
-  var s=subjOf(ses.subject);
 
-  var body="";
+  var isLast = (idx === total - 1);
+  var blk = window.TKAEngine.blockOf(ses, idx);
+  var isBlockLast = (idx === blk.start + blk.count - 1);
+  var qNo = idx - blk.start + 1; // nomor dalam blok/mapel
+  var bq = ses.blocks ? ses.blocks[blk.i].questions : ses.questions;
+  var ansBlock = bq.filter(function(x){return qAnswered(x)}).length;
+  var marked = qMarked(q.id);
+  var bobot = Math.max(1, Math.round(100/total));
+  var topic = q.topic || typeLabel(q.type);
+  var qid = String(q.id).split("@")[0];
+  var dotColor = ((subjOf(blk.subject)||{}).color)||"#1f6feb";
+
+  var body="", footHint="";
   if(q.type==="multiple_choice"){
     var cur=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur.indexOf(o.id)!==-1;
-      return '<div class="opt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span></div>';
-    }).join("")+'<p class="hint">Pilih <b>satu</b> jawaban.</p>';
+      return '<label class="ropt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="radio"></span><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Terpilih</span></label>';
+    }).join("");
+    footHint="ⓘ Pilih satu jawaban yang tepat. Jawaban tersimpan otomatis saat memilih.";
   } else if(q.type==="multiple_select"){
     var cur2=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur2.indexOf(o.id)!==-1;
-      return '<label class="opt'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="txt">'+esc(o.text)+'</span></label>';
-    }).join("")+'<p class="hint">Bisa pilih <b>lebih dari satu</b>. Nilai penuh hanya jika kombinasi tepat semua.</p>';
+      return '<label class="ropt multi'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Dipilih</span></label>';
+    }).join("");
+    footHint="ⓘ Bisa pilih lebih dari satu. Nilai penuh hanya jika kombinasi tepat semua.";
   } else if(q.type==="true_false_table"){
     var ans=(ses.answers[q.id]||{});
     body='<table class="tf-table"><tr><th>Pernyataan</th><th style="text-align:center">Benar</th><th style="text-align:center">Salah</th></tr>'
@@ -758,20 +772,17 @@ function renderSim(){
         return '<tr><td>'+esc(st.text)+'</td>'
           +'<td class="c"><button class="tf-btn'+(v==="true"?" sel":"")+'" data-tf="'+i+':true">'+(v==="true"?"✓":"○")+'</button></td>'
           +'<td class="c"><button class="tf-btn'+(v==="false"?" sel":"")+'" data-tf="'+i+':false">'+(v==="false"?"✓":"○")+'</button></td></tr>';
-      }).join("")+'</table><p class="hint">Setiap baris hanya satu pilihan. Klik untuk memberi tanda ✓.</p>';
+      }).join("")+'</table>';
+    footHint="ⓘ Setiap baris hanya satu pilihan. Klik untuk memberi tanda ✓.";
   }
 
-  var isLast = (idx === total - 1);
-  var blk = window.TKAEngine.blockOf(ses, idx);
-  var isBlockLast = (idx === blk.start + blk.count - 1);
-  var qNo = idx - blk.start + 1; // nomor dalam blok/mapel
-  var bottomBtn;
+  var mainBtn;
   if(isLast){
-    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnFinish">Selesai</button>';
+    mainBtn = '<button class="btn btn-primary" id="btnFinish">Selesai</button>';
   } else if(ses.blocks && isBlockLast){
-    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnFinishBlock">Selesaikan Bagian</button>';
+    mainBtn = '<button class="btn btn-primary" id="btnFinishBlock">Selesaikan Bagian</button>';
   } else {
-    bottomBtn = '<span class="spacer"></span><button class="btn btn-primary" id="btnNext">Soal Berikutnya →</button>';
+    mainBtn = '<button class="btn btn-primary" id="btnNext">Selanjutnya (Simpan) ›</button>';
   }
 
   closeNavPanel();
@@ -779,28 +790,47 @@ function renderSim(){
   var totalAll=ses.totalMs||ses.durationMs||blockDur;
   var frac0=remain/blockDur;
   var timerCls=frac0<=window.TKA_TIME.dangerAt?" danger":frac0<=window.TKA_TIME.warnAt?" warn":"";
-  var elapsedMs=Math.max(0, Date.now()-ses.startTime);
-  var avgPace=answeredCount? fmtAvgSec(elapsedMs/1000/answeredCount)+" /soal" : "—";
-  var budgetPace=fmtAvgSec(totalAll/1000/(total||1))+" /soal";
-  var timerLbl=ses.blocks? "WAKTU BAGIAN "+(blk.i+1) : "WAKTU TERSISA";
-  var subjLabel = esc(window.subjectName(blk.subject));
-  var blockLabel = ses.blocks
-    ? 'Bagian '+(blk.i+1)+'/'+ses.blocks.length+' • '+subjLabel
-    : 'SIMULASI TKA • '+subjLabel;
+  var budgetPace=fmtAvgSec(totalAll/1000/(total||1));
+  var modeBadge=ses.blocks? "BAGIAN "+(blk.i+1) : esc(window.timeModeLabel(ses.mode));
+  var headTitle = ses.blocks
+    ? 'SIMULASI TKA • '+esc(window.subjectName(blk.subject))
+    : 'SIMULASITKA • '+esc(window.subjectName(blk.subject));
   view.innerHTML=
-    '<div class="sim-header"><div><div class="subj">'+blockLabel+'</div>'
-    +'<div class="progress">Soal '+qNo+' dari '+blk.count+' • Sudah dijawab: '+answeredCount+'/'+total+'</div>'
-    +'<div class="pace">'+(ses.blocks?"TKA Lengkap":"Mode "+esc(window.timeModeLabel(ses.mode)))+' • Rata-rata: <b>'+avgPace+'</b> • Target ≤ '+budgetPace+'</div></div>'
-    +'<div class="sim-header-actions"><button class="btn btn-sm btn-list" id="btnList">☰ Daftar Soal</button>'
-    +'<div class="timer-box"><div class="timer-label">'+timerLbl+'</div><div class="timer'+timerCls+'" id="simTimer">'+fmtTime(remain)+'</div></div></div></div>'
-    +'<div class="sim-single"><div class="card q-card">'
-    +'<div class="q-meta"><span class="q-num">SOAL '+qNo+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+esc(diffLabel(q.difficulty))+'</span>'
-    +(qMarked(q.id)?'<span class="badge warn">★ Ditandai</span>':"")+'</div>'
-    +'<div class="q-text">'+esc(q.question)+'</div>'
+    '<div class="exam-top"><div class="exam-title">'
+    +'<div class="exam-subj"><span class="exam-logo" style="background:'+dotColor+'">▦</span><b>'+headTitle+'</b><span class="badge">SMK PPLG</span></div>'
+    +'<div class="exam-sub">Target ≤ '+budgetPace+' / soal • <span class="sys-ok">● Sistem Aktif</span></div>'
+    +'</div>'
+    +'<div class="exam-timer"><span class="t-ico">⏱</span><span id="simTimer" class="timer'+timerCls+'">'+fmtTime(remain)+'</span><span class="badge warn">'+modeBadge+'</span></div>'
+    +'<button class="btn btn-sm btn-list" id="btnList">▦ Daftar Soal <span class="pill">'+qNo+'/'+blk.count+'</span></button>'
+    +'</div>'
+    +'<div class="exam-main"><div class="card exam-card">'
+    +'<div class="exam-meta"><span class="b-soal">Soal '+qNo+' dari '+blk.count+'</span><span class="badge">'+esc(topic)+'</span><span class="badge warn">'+esc(diffLabel(q.difficulty))+'</span>'
+    +'<span class="badge ok">Bobot: '+bobot+' Poin</span><span class="badge">ID: '+esc(qid)+'</span></div>'
+    +'<div class="q-text">'+qHtml(q.question)+'</div>'
     + body
-    +'<div class="sim-nav"><button class="btn" id="btnMark">'+(qMarked(q.id)?"★ Batalkan Tanda":"☆ Tandai Soal")+'</button>'
-    + bottomBtn +'</div>'
-    +'</div></div>';
+    +'<p class="hint">'+footHint+'</p>'
+    +'<div class="exam-foot"><button class="btn'+(marked?" mark-on":"")+'" id="btnMark">⚑ '+(marked?"Ragu-Ragu Ditandai":"Ragu-Ragu")+'</button>'
+    +'<span style="flex:1"></span>'
+    +'<button class="btn" id="btnPrev"'+((idx===0||(ses.blocks&&idx===blk.start))?" disabled":"")+'>‹ Sebelumnya</button>'
+    + mainBtn +'</div>'
+    +'</div>'
+    +'<aside class="exam-side'+(S.navPanelOpen?" open":"")+'" id="examSide" aria-label="Navigasi Daftar Soal">'
+    +'<div class="exam-side-head"><div><b>Navigasi Daftar Soal</b><div class="hint">Klik nomor soal untuk langsung berpindah</div></div><button class="btn btn-sm" id="sideClose">✕</button></div>'
+    +'<div class="legend legend-box"><span><i class="dot" style="background:var(--accent)"></i>Aktif (#'+qNo+')</span><span><i class="dot" style="background:var(--green)"></i>Terjawab</span><span><i class="dot" style="background:#eab308"></i>Ragu-ragu</span><span><i class="dot" style="background:#fff;border:1px solid #b9cdf0"></i>Belum dijawab</span></div>'
+    +'<div class="num-grid" id="sideGrid">'
+    + bq.map(function(x,k){
+        return navNumBtn(x, blk.start+k, k+1, window.subjectName(blk.subject));
+      }).join("")
+    +'</div>'
+    +'<button class="btn btn-finish-red" id="btnFinishDrawer">✓ SELESAIKAN &amp; KUMPULKAN '+(ses.blocks?"BAGIAN":"UJIAN")+'</button>'
+    +'</aside></div>'
+    +'<div class="exam-bottom"><div class="jump-bar"><span class="hint">LOMPAT:</span><span id="jumpNums">'
+    + bq.slice(0,10).map(function(x,k){
+        return navNumBtn(x, blk.start+k, k+1, window.subjectName(blk.subject));
+      }).join("")
+    +'</span>'+(bq.length>10?'<button class="btn btn-sm" id="jumpMore">+'+(bq.length-10)+' Lainnya →</button>':"")
+    +'</div><button class="btn btn-finish-red sm" id="btnFinishBottom">✓ SELESAIKAN UJIAN</button></div>'
+    +'<div class="exam-backdrop'+(S.navPanelOpen?" show":"")+'" id="examBackdrop"></div>';
 
   // interactions
   view.querySelectorAll("[data-pick]").forEach(function(el){
@@ -831,9 +861,27 @@ function renderSim(){
     };
   });
   document.getElementById("btnList").onclick=function(){ toggleNavPanel(); };
+  var side=document.getElementById("examSide"), bd=document.getElementById("examBackdrop");
+  function setDrawer(open){
+    S.navPanelOpen=open;
+    if(side) side.classList.toggle("open",open);
+    if(bd) bd.classList.toggle("show",open);
+  }
+  S._setDrawer=setDrawer;
+  var sc=document.getElementById("sideClose");
+  if(sc) sc.onclick=function(){ setDrawer(false); };
+  if(bd) bd.onclick=function(){ setDrawer(false); };
+  var jm=document.getElementById("jumpMore");
+  if(jm) jm.onclick=function(){ setDrawer(true); };
   var nx=document.getElementById("btnNext");
   if(nx) nx.onclick=function(){
     if(S.session.currentIndex<S.session.questions.length-1){S.session.currentIndex++; persistActive(); renderSim();}
+  };
+  var pv=document.getElementById("btnPrev");
+  if(pv) pv.onclick=function(){
+    var ses=S.session, blo=window.TKAEngine.blockOf(ses, ses.currentIndex);
+    var minIdx=(ses.blocks?blo.start:0);
+    if(S.session.currentIndex>minIdx){S.session.currentIndex--; persistActive(); renderSim();}
   };
   var nxb=document.getElementById("btnFinishBlock");
   if(nxb) nxb.onclick=function(){ confirmFinishBlock(); };
@@ -845,6 +893,19 @@ function renderSim(){
   };
   var fin=document.getElementById("btnFinish");
   if(fin) fin.onclick=function(){ confirmFinish(); };
+  var fdr=document.getElementById("btnFinishDrawer");
+  if(fdr) fdr.onclick=function(){ confirmFinish(); };
+  var fbt=document.getElementById("btnFinishBottom");
+  if(fbt) fbt.onclick=function(){ confirmFinish(); };
+  // lompat via drawer & bar bawah memakai handler yang sama
+  view.querySelectorAll("[data-navjump]").forEach(function(b){
+    b.onclick=function(){
+      S.session.currentIndex=parseInt(b.getAttribute("data-navjump"),10);
+      persistActive();
+      S.navPanelOpen=false;
+      renderSim();
+    };
+  });
 }
 /* ---------- Panel Daftar Soal (overlay; timer & session tidak disentuh) ---------- */
 function navBoxLabel(x, i, dispNo){
@@ -859,73 +920,23 @@ function navNumBtn(x, globalIdx, labelNo, subjName){
   if(qMarked(x.id)) cls+=" marked";
   return '<button class="'+cls+'" data-navjump="'+globalIdx+'" aria-label="Soal '+labelNo+(subjName?" "+subjName:"")+'">'+navBoxLabel(x,globalIdx,labelNo)+'</button>';
 }
+/* ---------- Drawer Daftar Soal (persisten di desktop, overlay di HP) ---------- */
 function openNavPanel(){
   if(!S.session || S.session.status!=="RUNNING") return;
-  closeNavPanel();
   S.navPanelOpen=true;
-  var ses=S.session, idx=ses.currentIndex, total=ses.questions.length;
-  var answeredCount=ses.questions.filter(function(x){return qAnswered(x)}).length;
-  var gridHtml="", panelBadge=esc(window.subjectName(ses.subject)), panelSub="";
-  if(ses.blocks){
-    // Hanya mapel yang sedang dikerjakan (resmi: antar-bagian dipisah jeda)
-    var blk=window.TKAEngine.blockOf(ses, idx);
-    var b=ses.blocks[blk.i], start=blk.start;
-    var nums=b.questions.map(function(x,k){
-      return navNumBtn(x, start+k, k+1, window.subjectName(b.subject));
-    }).join("");
-    var ansB=b.questions.filter(function(x){return qAnswered(x)}).length;
-    gridHtml='<div class="navblock"><div class="navpanel-sub" style="padding:0 0 8px">Bagian '+(blk.i+1)+'/'+ses.blocks.length+'</div>'
-      +'<div class="num-grid">'+nums+'</div></div>';
-    panelBadge=esc(window.subjectName(b.subject));
-    panelSub='Sudah dijawab '+ansB+'/'+b.questions.length+' • Ditandai '+ses.marked.filter(function(id){
-      return b.questions.some(function(x){return x.id===id;});
-    }).length+' • Klik nomor untuk pindah (panel tertutup otomatis).';
-  } else {
-    gridHtml='<div class="num-grid">'+ses.questions.map(function(x,i){
-      return navNumBtn(x, i, i+1, null);
-    }).join("")+'</div>';
-    panelSub='Sudah dijawab '+answeredCount+'/'+total+' • Ditandai '+ses.marked.length+' • Klik nomor untuk pindah (panel tertutup otomatis).';
-  }
-  var ov=document.createElement("div");
-  ov.className="navpanel-back"; ov.id="navPanel";
-  ov.innerHTML='<div class="navpanel" role="dialog" aria-label="Daftar Soal">'
-    +'<div class="navpanel-head"><b>DAFTAR SOAL</b><span class="badge">'+panelBadge+'</span>'
-    +'<span style="flex:1"></span><button class="btn btn-sm" id="navClose">Tutup</button></div>'
-    +'<div class="navpanel-sub">'+panelSub+'</div>'
-    +'<div class="navpanel-grid">'+gridHtml
-    +'<div class="legend"><span><i class="dot" style="background:#f1f5f9;border:1px solid #cbd5e1"></i>Belum</span><span><span style="font-weight:800">✓</span> Sudah</span><span><span style="font-weight:800">★</span> Ditandai</span><span><i class="dot" style="background:#fff;border:2px solid var(--accent)"></i>Aktif</span></div></div>'
-    +'<div class="navpanel-foot"><button class="btn btn-primary" id="navDone" style="flex:1">Tutup</button>'
-    +'<button class="btn btn-sm" id="navExitFs" title="Keluar fullscreen untuk menguji deteksi">Uji: Keluar Fullscreen</button></div></div>';
-  document.body.appendChild(ov);
-  // Klik backdrop menutup panel — tidak mengubah jawaban apa pun
-  ov.addEventListener("click", function(e){ if(e.target===ov) closeNavPanel(); });
-  document.getElementById("navClose").onclick=function(e){ e.stopPropagation(); closeNavPanel(); };
-  document.getElementById("navDone").onclick=function(e){ e.stopPropagation(); closeNavPanel(); };
-  ov.querySelector(".navpanel").addEventListener("click", function(e){ e.stopPropagation(); });
-  ov.querySelectorAll("[data-navjump]").forEach(function(b){
-    b.onclick=function(e){
-      e.stopPropagation();
-      S.session.currentIndex=parseInt(b.getAttribute("data-navjump"),10);
-      persistActive(); // jawaban soal lain tetap tersimpan (tidak direset)
-      closeNavPanel();
-      renderSim();
-    };
-  });
-  var ef=document.getElementById("navExitFs");
-  if(ef) ef.onclick=function(e){
-    e.stopPropagation();
-    if(document.fullscreenElement) document.exitFullscreen();
-    else terminateFullscreenExit();
-  };
+  if(S._setDrawer) S._setDrawer(true);
 }
 function closeNavPanel(){
   S.navPanelOpen=false;
-  var p=document.getElementById("navPanel");
-  if(p) p.remove();
+  var p=document.getElementById("examSide"); if(p) p.classList.remove("open");
+  var b=document.getElementById("examBackdrop"); if(b) b.classList.remove("show");
+  var old=document.getElementById("navPanel"); if(old) old.remove();
 }
 function toggleNavPanel(){
-  if(S.navPanelOpen) closeNavPanel();
-  else openNavPanel();
+  if(!S.session || S.session.status!=="RUNNING") return;
+  S.navPanelOpen=!S.navPanelOpen;
+  if(S._setDrawer) S._setDrawer(S.navPanelOpen);
+  else closeNavPanel();
 }
 function confirmFinish(){
   var ses=S.session;
