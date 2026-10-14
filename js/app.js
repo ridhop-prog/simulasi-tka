@@ -857,16 +857,32 @@ function confirmFinishBlock(){
 function blockTimeout(){
   enterBreak(true);
 }
-function qHtml(t){ return esc(t).replace(/(\d+(?:[.,]\d+)?)/g,'<span class="qnum">$1</span>'); }
+function qHtml(t){ return fracHtml(t); }
+// Teks kaya: escape + pecahan bertingkat (2 1/4, 12/21) + sorot angka.
+// Pecahan diamankan dulu sebagai token tanpa digit agar tak tersentuh highlighter.
+function fracHtml(t){ return richText(t,false); }
 // Sorot bagian ber-tanda-kutip pada pernyataan B/S (biru). Sekali jalan agar
 // span yang disisipkan tidak diproses ulang. Dilewati bila jumlah kutip ganjil.
-function bsQ(t){
+function bsQ(t){ return richText(t,true); }
+// Inti teks kaya: escape → pecahan → (kutipan) → sorot angka → restore.
+function richText(t, quotes){
+  var L="ABCDEFGHIJKLMNOPQRSTUVWXYZ", saved=[];
   var s=esc(t);
-  var sq=(s.match(/'/g)||[]).length, dq=(s.match(/"/g)||[]).length;
-  function wrap(m){ return '<span class="bs-q">'+m+'</span>'; }
-  if(sq%2===0 && dq%2===0) return s.replace(/'[^']+'|"[^"]+"/g, wrap);
-  if(sq%2===0) return s.replace(/'[^']+'/g, wrap);
-  if(dq%2===0) return s.replace(/"[^"]+"/g, wrap);
+  function stash(mixed,a,b,c){ saved.push({m:mixed,a:a,b:b,c:c}); return "@@"+L[saved.length-1]+"@@"; }
+  s=s.replace(/(\d+)\s+(\d+)\/(\d+)/g,function(m,a,b,c){return stash(true,a,b,c);});
+  s=s.replace(/(\d+)\/(\d+)/g,function(m,a,b){return stash(false,null,a,b);});
+  if(quotes){
+    var sq=(s.match(/'/g)||[]).length, dq=(s.match(/"/g)||[]).length;
+    function wrap(m){ return '<span class="bs-q">'+m+'</span>'; }
+    if(sq%2===0 && dq%2===0) s=s.replace(/'[^']+'|"[^"]+"/g, wrap);
+    else if(sq%2===0) s=s.replace(/'[^']+'/g, wrap);
+    else if(dq%2===0) s=s.replace(/"[^"]+"/g, wrap);
+  }
+  s=s.replace(/(\d+(?:[.,]\d+)?)/g,'<span class="qnum">$1</span>');
+  saved.forEach(function(f,i){
+    var inner='<span class="frac"><span class="fnum">'+f.b+'</span><span class="fden">'+f.c+'</span></span>';
+    s=s.split("@@"+L[i]+"@@").join(f.m?'<span class="fmix">'+f.a+inner+'</span>':inner);
+  });
   return s;
 }
 function renderSim(){
@@ -896,14 +912,14 @@ function renderSim(){
     var cur=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur.indexOf(o.id)!==-1;
-      return '<label class="ropt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓</span></label>';
+      return '<label class="ropt'+(sel?" sel":"")+'" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+fracHtml(o.text)+'</span><span class="picked">✓</span></label>';
     }).join("");
     footHint="ⓘ Pilih satu jawaban yang tepat. Jawaban tersimpan otomatis saat memilih.";
   } else if(q.type==="multiple_select"){
     var cur2=(ses.answers[q.id]||[]);
     body=q.options.map(function(o){
       var sel=cur2.indexOf(o.id)!==-1;
-      return '<label class="ropt multi'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="box"></span><span class="txt">'+esc(o.text)+'</span><span class="picked">✓ Terpilih</span></label>';
+      return '<label class="ropt multi'+(sel?" sel":"")+'"><input type="checkbox" data-check="'+o.id+'"'+(sel?" checked":"")+'><span class="box"></span><span class="txt">'+fracHtml(o.text)+'</span><span class="picked">✓ Terpilih</span></label>';
     }).join("");
     footHint="ⓘ Bisa pilih lebih dari satu. Nilai penuh hanya jika kombinasi tepat semua.";
   } else if(q.type==="true_false_table"){
@@ -1280,13 +1296,13 @@ function vReview(id){
           return id+(o?". "+o.text:"");
         }).join("; ");
       };
-      userHtml='<div><b>Jawaban Anda:</b> '+esc(txt(Array.isArray(ans)?ans:[]))+'</div>';
-      kunciHtml='<div><b>Jawaban Benar:</b> '+esc(txt(q.correctAnswer))+'</div>';
+      userHtml='<div><b>Jawaban Anda:</b> '+fracHtml(txt(Array.isArray(ans)?ans:[]))+'</div>';
+      kunciHtml='<div><b>Jawaban Benar:</b> '+fracHtml(txt(q.correctAnswer))+'</div>';
     }
     return '<div class="card rev-item '+cls+'"><div class="q-meta"><span class="q-num">SOAL '+no+'</span><span class="badge">'+esc(typeLabel(q.type))+'</span><span class="badge">'+status+'</span></div>'
-      +'<div style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px">'+esc(q.question)+'</div>'
+      +'<div style="font-size:14px;line-height:1.7;white-space:pre-wrap;margin-bottom:8px">'+fracHtml(q.question)+'</div>'
       +'<div style="font-size:13px;line-height:1.7">'+userHtml+kunciHtml
-      +(q.explanation?'<div style="margin-top:6px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px"><b>Pembahasan:</b> '+esc(q.explanation)+'</div>':"")
+      +(q.explanation?'<div style="margin-top:6px;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:8px 10px"><b>Pembahasan:</b> '+fracHtml(q.explanation)+'</div>':"")
       +'</div></div>';
   }
   // Kelompokkan per mapel untuk TKA Lengkap
@@ -1373,8 +1389,8 @@ function vBank(){
   var rows=filtered.slice(0,200).map(function(q){
     var prev=q.type==="true_false_table"
       ? q.statements.map(function(s){return "• "+s.text+" ("+(s.answer==="true"?"BENAR":"SALAH")+")"}).join("<br>")
-      : (q.options||[]).map(function(o){return esc(o.id)+". "+esc(o.text)}).join("<br>");
-    return '<div class="card qrow"><h4>['+esc(q.id)+'] '+esc(q.question)+'</h4>'
+      : (q.options||[]).map(function(o){return esc(o.id)+". "+fracHtml(o.text)}).join("<br>");
+    return '<div class="card qrow"><h4>['+esc(q.id)+'] '+fracHtml(q.question)+'</h4>'
       +'<div style="font-size:12px;color:var(--muted);margin-bottom:6px">'+esc(window.subjectName(q.subject))+' • '+esc(typeLabel(q.type))+' • '+esc(diffLabel(q.difficulty))+' • Kunci: <b>'+esc((q.correctAnswer||[]).join(",")||q.statements.map(function(s){return s.answer==="true"?"B":"S"}).join(","))+'</b></div>'
       +'<div style="font-size:13px;line-height:1.7">'+prev+'</div>'
       +'<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-sm" data-edit="'+esc(q.id)+'">Edit</button><button class="btn btn-sm" data-hapus="'+esc(q.id)+'">Hapus</button></div></div>';
@@ -1471,7 +1487,7 @@ function vImport(){
       +(p.errors.length?'<br><br>Error:<br>'+p.errors.map(function(e){return "• "+esc(e)}).join("<br>"):"")
       +'</div>'
       +p.questions.slice(0,10).map(function(q,i){
-        return '<div class="card qrow"><h4>'+(i+1)+'. ['+esc(typeLabel(q.type))+'] '+esc(q.question)+'</h4><div style="font-size:12px;color:var(--muted)">Kunci: '+esc((q.correctAnswer||[]).join(",")||q.statements.map(function(s){return s.answer==="true"?"B":"S"}).join(","))+'</div></div>';
+        return '<div class="card qrow"><h4>'+(i+1)+'. ['+esc(typeLabel(q.type))+'] '+fracHtml(q.question)+'</h4><div style="font-size:12px;color:var(--muted)">Kunci: '+esc((q.correctAnswer||[]).join(",")||q.statements.map(function(s){return s.answer==="true"?"B":"S"}).join(","))+'</div></div>';
       }).join("")
       +(p.total>10?'<p class="hint">…dan '+(p.total-10)+' soal lainnya.</p>':"")
       +'<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="impCancel">Batalkan</button><button class="btn btn-primary" id="impSave"'+(p.errors.length||!p.total?" disabled":"")+'>Simpan ke Bank Soal</button></div>'
@@ -1719,7 +1735,7 @@ function renderKuisQ(){
   var body="";
   if(it.kind==="mc"){
     body=it.q.options.map(function(o){
-      return '<button class="quiz-opt" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+esc(o.text)+'</span></button>';
+      return '<button class="quiz-opt" data-pick="'+o.id+'"><span class="key">'+o.id+'</span><span class="txt">'+fracHtml(o.text)+'</span></button>';
     }).join("");
   } else {
     body='<div class="quiz-tf"><button class="quiz-opt tf" data-pick="true">BENAR ✓</button>'
@@ -1836,7 +1852,7 @@ function renderKuisDone(){
       ? (function(){ var o=a.it.q.options.find(function(x){return String(x.id)===String(a.pick)}); return o? o.id+". "+o.text : a.pick; })()
       : (a.pick==="true"?"Benar":"Salah"));
     return '<div class="card rev-item '+(a.ok?"rev-correct":"rev-wrong")+'"><div class="q-meta"><span class="q-num">'+(i+1)+'</span><span class="badge">'+(a.ok?"✓ Benar":"✕ Salah")+'</span></div>'
-      +'<div style="font-size:14px;margin-bottom:6px">'+esc(a.it.kind==="mc"?a.it.q.question:a.it.text)+'</div>'
+      +'<div style="font-size:14px;margin-bottom:6px">'+fracHtml(a.it.kind==="mc"?a.it.q.question:a.it.text)+'</div>'
       +'<div style="font-size:13px">Jawabanmu: <b>'+esc(yours)+'</b><br>Benar: <b>'+esc(rightTxt)+'</b></div></div>';
   }).join("");
   view.innerHTML='<div class="card result-hero"><div class="q-meta" style="justify-content:center"><span class="q-num">HASIL KUIS</span><span class="badge">'+esc(window.subjectName(Q.subject))+'</span></div>'
