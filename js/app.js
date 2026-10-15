@@ -110,6 +110,39 @@ function terminateTabSwitch(){
   if(b) b.onclick=function(){closeModal(); location.hash="#/hasil";};
 }
 
+/* Deteksi layar mengambang / split-screen HP: lebar viewport menyusut jauh
+   dari lebar layar (keyboard hanya mengubah TINGGI, jadi aman). Diekspos
+   sebagai window.__floatViolated agar teruji. */
+function floatViolated(innerW, screenW){
+  if(!screenW || screenW<=0) return false;
+  return innerW < Math.min(500, screenW*0.75);
+}
+window.__floatViolated = floatViolated;
+function floatWatchdog(){
+  if(S.floatId) return;
+  S.floatId=setInterval(function(){
+    if(!S.session || S.session.status!=="RUNNING") return;
+    if(document.hidden) return; // sudah ditangani visibilitychange
+    if(Date.now() < (S.floatGraceUntil||0)) return;
+    var sw = (window.screen && window.screen.width) || 0;
+    if(floatViolated(window.innerWidth||0, sw)){
+      stopFloatWatchdog();
+      terminateFloating();
+    }
+  },2000);
+}
+function stopFloatWatchdog(){ if(S.floatId){clearInterval(S.floatId); S.floatId=null;} }
+function terminateFloating(){
+  if(!S.session || S.session.status!=="RUNNING") return;
+  window.TKAEngine.playAlarm();
+  finishSession("FLOATING", true);
+  modal('<h3>SIMULASI DIHENTIKAN</h3>'
+    +'<div class="err-box">Terdeteksi layar mengambang / split-screen.<br>Kerjakan ujian dalam layar penuh.<br><br>Alasan:<br><b>Layar Mengambang</b></div>'
+    +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button class="btn btn-primary" id="mGoResult">Lihat Hasil</button></div>');
+  var b=document.getElementById("mGoResult");
+  if(b) b.onclick=function(){closeModal(); location.hash="#/hasil";};
+}
+
 function terminateFullscreenExit(){
   if(!S.session || S.session.status!=="RUNNING") return;
   window.TKAEngine.playAlarm();
@@ -155,15 +188,21 @@ function startTimer(){
     }
   },1000);
 }
+/* Masa tenggang watchdog + watchdog layar mengambang dimulai tiap sesi/bagian */
+function armExamGuards(){
+  S.floatGraceUntil=Date.now()+8000;
+  floatWatchdog();
+}
 function stopTimer(){ if(S.timerId){clearInterval(S.timerId); S.timerId=null;} }
 
 function finishSession(reason, fromFullscreen){
   if(!S.session || S.session.status!=="RUNNING") return;
   stopTimer();
+  stopFloatWatchdog();
   if(typeof closeNavPanel==="function") closeNavPanel();
   S.leaveGuard=null;
   var ses=S.session;
-  ses.status = reason==="COMPLETED" ? "COMPLETED" : reason==="TIMEOUT" ? "TIMEOUT" : reason==="TAB_SWITCH" ? "TERMINATED_TAB_SWITCH" : "TERMINATED_FULLSCREEN_EXIT";
+  ses.status = reason==="COMPLETED" ? "COMPLETED" : reason==="TIMEOUT" ? "TIMEOUT" : reason==="TAB_SWITCH" ? "TERMINATED_TAB_SWITCH" : reason==="FLOATING" ? "TERMINATED_FLOATING" : "TERMINATED_FULLSCREEN_EXIT";
   ses.endTime=Date.now();
   ses.finishReason=reason;
   var sc=window.TKAEngine.score(ses);
@@ -521,6 +560,7 @@ function beginSimulationCampuran(){
   ses.endTime=Date.now()+ses.durationMs;
   ses.requestedCount=k.count;
   S.session=ses;
+  armExamGuards();
   S.leaveGuard={ route:"#/simulasi",
     message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
     onQuit:function(){ finishSession("COMPLETED"); } };
@@ -681,6 +721,7 @@ function vInstruksi(){
     +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
     +'<li>Jangan refresh/menutup halaman selama ujian; state disimpan dan ada peringatan browser.</li>'
     +'<li>Dilarang beralih aplikasi/tab/desktop lain (Alt+Tab dsb.) — terdeteksi = simulasi dihentikan otomatis.</li>'
+    +'<li>Dilarang split-screen / layar mengambang — kerjakan dalam layar penuh.</li>'
     +'<li>Klik <b>Selesai</b> pada soal terakhir bila yakin. Waktu habis juga otomatis selesai.</li></ol>'
     +(bankN+dynCapI<p.count?'<div class="warn-box">Bank soal hanya '+bankN+'+'+dynCapI+' angka-acak soal — simulasi memakai '+realN+' soal tanpa duplikasi.</div>':"")
     +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami instruksi dan siap masuk mode fullscreen untuk memulai simulasi.</label>'
@@ -714,6 +755,7 @@ function vInstruksiLengkap(){
     +'<li>Jawaban tersimpan otomatis. Nomor <b>[ ]</b>=belum, <b>[✓]</b>=sudah, <b>[★]</b>=ditandai.</li>'
     +'<li>Simulasi berjalan dalam <b>fullscreen</b>. <b>Keluar fullscreen = simulasi dihentikan otomatis</b> (alarm + nilai dihitung).</li>'
     +'<li>Dilarang beralih aplikasi/tab/desktop lain (Alt+Tab dsb.) — terdeteksi = simulasi dihentikan otomatis.</li>'
+    +'<li>Dilarang split-screen / layar mengambang — kerjakan dalam layar penuh.</li>'
     +'<li>Klik <b>Selesai</b> di soal terakhir bagian 5. Hasil berisi nilai gabungan + nilai tiap mapel.</li></ol>'
     +'<label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:12px"><input type="checkbox" id="agree" style="width:18px;height:18px;margin-top:2px"> Saya memahami peraturan dan siap masuk mode fullscreen untuk memulai TKA.</label>'
     +'<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-primary" id="beginBtn" disabled>Mulai TKA</button></div></div>';
@@ -735,6 +777,7 @@ function beginSimulation(){
   ses.endTime=Date.now()+ses.durationMs;
   ses.requestedCount=p.count;
   S.session=ses;
+  armExamGuards();
   S.leaveGuard={ route:"#/simulasi",
     message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
     onQuit:function(){ finishSession("COMPLETED"); } };
@@ -768,6 +811,7 @@ function beginSimulationLengkap(){
   ses.endTime=ses.blockEnd;
   ses.requestedCount=specs.reduce(function(a,s){return a+s.count;},0);
   S.session=ses;
+  armExamGuards();
   S.leaveGuard={ route:"#/simulasi",
     message:"Jika keluar sekarang, jawaban yang sudah diisi akan disimpan dan simulasi dianggap selesai.",
     onQuit:function(){ finishSession("COMPLETED"); } };
@@ -805,6 +849,7 @@ function vSimulasi(){
     }
   }
   startTimer();
+  armExamGuards();
   if(ses.onBreak){ renderBreak(); return; }
   renderSim();
 }
@@ -838,6 +883,7 @@ function renderBreak(){
     ses.blockEnd=Date.now()+ses.blocks[ses.blockIdx].durationMs;
     ses.onBreak=false; delete ses.breakStart;
     persistActive(); startTimer(); renderSim();
+    armExamGuards();
     toast("Bagian "+(ses.blockIdx+1)+": "+window.subjectName(ses.blocks[ses.blockIdx].subject));
   };
 }
@@ -1164,10 +1210,11 @@ function vHasil(){
   }
   if(!r){ view.innerHTML='<div class="card pad">Belum ada hasil. <a class="btn btn-primary" href="#/">Ke Beranda</a></div>'; return; }
   var reason = r.finishReason||"COMPLETED";
-  var reasonId = reason==="COMPLETED"?"COMPLETED":reason==="TIMEOUT"?"TIMEOUT":reason==="TAB_SWITCH"?"TAB_SWITCH":"FULLSCREEN_EXIT";
+  var reasonId = reason==="COMPLETED"?"COMPLETED":reason==="TIMEOUT"?"TIMEOUT":reason==="TAB_SWITCH"?"TAB_SWITCH":reason==="FLOATING"?"FLOATING":"FULLSCREEN_EXIT";
   var reasonTxt = reasonId==="TIMEOUT"?"durasi waktu habis"
     : reasonId==="FULLSCREEN_EXIT"?"keluar dari fullscreen"
     : reasonId==="TAB_SWITCH"?"beralih aplikasi/tab lain"
+    : reasonId==="FLOATING"?"menggunakan layar mengambang/split-screen"
     : "kamu menekan Selesai";
   var byType={};
   r.questions.forEach(function(q){
@@ -1189,6 +1236,8 @@ function vHasil(){
   var verdict=r.correct===0?"Belum Ada Soal Terjawab Benar":tuntas?"Kompeten — Pertahankan!":"Belum Tuntas, Butuh Remedial";
   var headPill=reasonId==="TIMEOUT"
     ? '<span class="badge warn">⏱ Waktu Habis - Perlu Peningkatan</span>'
+    : reasonId==="FLOATING"
+    ? '<span class="badge err">▦ Layar Mengambang - Dihentikan</span>'
     : tuntas? '<span class="badge ok">✓ Selesai - Kompeten</span>' : '<span class="badge warn">Selesai - Perlu Peningkatan</span>';
   var redoTo=r.subject==="lengkap"?"#/setup-lengkap":r.subject==="campuran"?"#/kustom":"#/setup?subject="+r.subject;
   // Efisiensi 1–4 dari jawaban + kecepatan + nilai
@@ -1211,7 +1260,7 @@ function vHasil(){
     true_false_table:{s:"Nilai tiap pernyataan secara mandiri dan teliti.",p:["Baris per Baris","Teliti Kata","Tetap Tenang"]}
   };
   var sk=skillMap[weak]||skillMap.multiple_choice;
-  var violated=(reasonId==="FULLSCREEN_EXIT"||reasonId==="TAB_SWITCH");
+  var violated=(reasonId==="FULLSCREEN_EXIT"||reasonId==="TAB_SWITCH"||reasonId==="FLOATING");
   var causePill=reasonId==="TIMEOUT"?'<span class="badge err">⏱ Timeout (Waktu Otomatis Habis)</span>'
     : violated?'<span class="badge err">✕ '+esc(r.status)+'</span>'
     :'<span class="badge ok">✓ Selesai Manual</span>';
