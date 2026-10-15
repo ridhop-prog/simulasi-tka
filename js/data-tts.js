@@ -13,7 +13,19 @@ matematika: [
   { w: "DIAGRAM", c: "Gambar untuk menyajikan data statistik" },
   { w: "RATAAN", c: "Istilah lain dari nilai rata-rata" },
   { w: "SUDUT", c: "Daerah yang dibentuk dua garis bertemu di satu titik" },
-  { w: "LUAS", c: "Ukuran besar permukaan bangun datar" }
+  { w: "LUAS", c: "Ukuran besar permukaan bangun datar" },
+  { w: "AKAR", c: "Lawan dari pangkat dua suatu bilangan" },
+  { w: "PANGKAT", c: "Perkalian berulang bilangan yang sama" },
+  { w: "GARIS", c: "Hubungan dua titik yang lurus memanjang" },
+  { w: "SEGITIGA", c: "Bangun datar yang bersisi tiga" },
+  { w: "LINGKARAN", c: "Lengkungan penuh tanpa sudut" },
+  { w: "VOLUME", c: "Ukuran isi ruang bangun tiga dimensi" },
+  { w: "DESIMAL", c: "Bilangan berkoma persepuluhan" },
+  { w: "RASIO", c: "Perbandingan dua buah besaran" },
+  { w: "MODUS", c: "Data yang paling sering muncul" },
+  { w: "KUARTIL", c: "Nilai pembagi data menjadi empat bagian" },
+  { w: "SUMBU", c: "Garis acuan pada diagram kartesius" },
+  { w: "RUMUS", c: "Aturan hitung dalam bentuk simbol" }
 ],
 bindo: [
   { w: "PARAGRAF", c: "Seperangkat kalimat yang membentuk satu gagasan" },
@@ -27,7 +39,19 @@ bindo: [
   { w: "BERITA", c: "Laporan peristiwa yang aktual dan faktual" },
   { w: "KONJUNGSI", c: "Kata penghubung antarkata atau kalimat" },
   { w: "SIMPULAN", c: "Kesimpulan akhir dari suatu bacaan" },
-  { w: "KALIMAT", c: "Satuan bahasa yang mengungkapkan pikiran utuh" }
+  { w: "KALIMAT", c: "Satuan bahasa yang mengungkapkan pikiran utuh" },
+  { w: "PROSA", c: "Karangan bebas tak terikat bait dan rima" },
+  { w: "PUISI", c: "Karya sastra terikat bait rima dan irama" },
+  { w: "DRAMA", c: "Karya dialog untuk dipentaskan" },
+  { w: "CERITA", c: "Rangkaian peristiwa yang disampaikan" },
+  { w: "TOKOH", c: "Pelaku dalam karya cerita" },
+  { w: "ALUR", c: "Jalinan peristiwa dari awal hingga akhir" },
+  { w: "LATAR", c: "Tempat waktu dan suasana cerita" },
+  { w: "AMANAT", c: "Pesan moral pengarang untuk pembaca" },
+  { w: "GAYA", c: "Ciri khas cara pengarang berbahasa" },
+  { w: "SLOGAN", c: "Kalimat pendek menarik untuk promosi" },
+  { w: "IKLAN", c: "Pemberitahuan untuk menawarkan barang jasa" },
+  { w: "PIDATO", c: "Tuturan resmi di depan khalayak" }
 ],
 binggris: [
   { w: "VERB", c: "Kata kerja dalam bahasa Inggris" },
@@ -41,7 +65,19 @@ binggris: [
   { w: "GREETING", c: "Sapaan seperti good morning" },
   { w: "SENTENCE", c: "Kalimat dalam bahasa Inggris" },
   { w: "THANKS", c: "Ucapan terima kasih" },
-  { w: "TEACHER", c: "Orang yang mengajar di kelas" }
+  { w: "TEACHER", c: "Orang yang mengajar di kelas" },
+  { w: "WRITE", c: "Kegiatan menuangkan gagasan lewat tulisan" },
+  { w: "LISTEN", c: "Kegiatan menyimak bunyi bahasa" },
+  { w: "QUESTION", c: "Kalimat yang meminta jawaban" },
+  { w: "ANSWER", c: "Tanggapan atas pertanyaan" },
+  { w: "LETTER", c: "Simbol abjad dari A sampai Z" },
+  { w: "WORD", c: "Rangkaian huruf yang bermakna" },
+  { w: "SPELLING", c: "Cara mengeja kata yang benar" },
+  { w: "DICTIONARY", c: "Buku rujukan arti kata" },
+  { w: "HOMEWORK", c: "Tugas sekolah untuk di rumah" },
+  { w: "EXAM", c: "Ujian dalam bahasa Inggris" },
+  { w: "LESSON", c: "Pelajaran dalam bahasa Inggris" },
+  { w: "CLASSMATE", c: "Teman sekelas dalam bahasa Inggris" }
 ],
 produktif: [
   { w: "HTML", c: "Bahasa markup untuk struktur halaman web" },
@@ -55,7 +91,19 @@ produktif: [
   { w: "FRONTEND", c: "Bagian web yang dilihat pengguna" },
   { w: "BACKEND", c: "Logika dan data di sisi server" },
   { w: "FLOWCHART", c: "Diagram alir penggambaran algoritma" },
-  { w: "TESTING", c: "Proses menguji perangkat lunak" }
+  { w: "TESTING", c: "Proses menguji perangkat lunak" },
+  { w: "KODE", c: "Deretan instruksi program komputer" },
+  { w: "DATA", c: "Fakta mentah yang diolah komputer" },
+  { w: "FILE", c: "Berkas penyimpan data digital" },
+  { w: "FOLDER", c: "Wadah tempat menyimpan berkas" },
+  { w: "BROWSER", c: "Perangkat lunak penjelajah web" },
+  { w: "JARINGAN", c: "Kumpulan komputer yang saling terhubung" },
+  { w: "APLIKASI", c: "Perangkat lunak siap pakai" },
+  { w: "SISTEM", c: "Kumpulan komponen yang saling bekerja" },
+  { w: "LOGIN", c: "Proses masuk memakai akun" },
+  { w: "PASSWORD", c: "Kata sandi pengaman akun" },
+  { w: "DEBUG", c: "Kegiatan mencari kesalahan program" },
+  { w: "VARIABEL", c: "Wadah penyimpan nilai program" }
 ],
 pkwu: [
   { w: "MODAL", c: "Dana awal untuk memulai usaha" },
@@ -69,6 +117,18 @@ pkwu: [
   { w: "KONSUMEN", c: "Orang yang membeli dan memakai produk" },
   { w: "BEP", c: "Titik impas: tidak untung tidak rugi" },
   { w: "RUGI", c: "Kebalikan dari laba usaha" },
-  { w: "USAHA", c: "Kegiatan produktif mencari keuntungan" }
+  { w: "USAHA", c: "Kegiatan produktif mencari keuntungan" },
+  { w: "PRODUK", c: "Barang atau jasa hasil usaha" },
+  { w: "HARGA", c: "Nilai tukar barang dalam uang" },
+  { w: "JUAL", c: "Menyerahkan barang dengan imbalan" },
+  { w: "BELI", c: "Mendapatkan barang dengan uang" },
+  { w: "TOKO", c: "Tempat menjual barang eceran" },
+  { w: "OMZET", c: "Total hasil penjualan usaha" },
+  { w: "KUALITAS", c: "Tingkat mutu suatu produk" },
+  { w: "PELANGGAN", c: "Pembeli tetap suatu usaha" },
+  { w: "SAINGAN", c: "Kompetitor dalam usaha sejenis" },
+  { w: "RENCANA", c: "Rancangan kegiatan usaha" },
+  { w: "TARGET", c: "Sasaran yang ingin dicapai" },
+  { w: "STRATEGI", c: "Rencana cermat mencapai tujuan" }
 ]
 };
