@@ -1284,7 +1284,7 @@ function vReview(id){
         var uu=u==="true"?"Benar":u==="false"?"Salah":"—";
         var kk=k==="true"?"Benar":"Salah";
         var sOk=u===k;
-        return '<tr><td>'+esc(st.text)+'</td><td>'+uu+'</td><td>'+kk+'</td><td>'+(sOk?"✓":"✕")+'</td></tr>';
+        return '<tr><td>'+bsQ(st.text)+'</td><td>'+uu+'</td><td>'+kk+'</td><td>'+(sOk?"✓":"✕")+'</td></tr>';
       }).join("");
       userHtml='<table class="mini"><tr><th>Pernyataan</th><th>Jawaban Anda</th><th>Jawaban Benar</th><th>Status</th></tr>'+rows+'</table>';
       kunciHtml="";
@@ -1748,7 +1748,7 @@ function renderKuisQ(){
     +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div>'
     +'<div class="progress" style="margin:6px 0">Pertanyaan '+(Q.idx+1)+' dari '+total+'</div>'
     +timerHtml
-    +'<div class="card pad quiz-card" id="qCard"><div class="q-text">'+esc(it.kind==="mc"?it.q.question:it.text)+'</div>'+body
+    +'<div class="card pad quiz-card" id="qCard"><div class="q-text">'+fracHtml(it.kind==="mc"?it.q.question:it.text)+'</div>'+body
     +'<div id="qFeed"></div></div>';
   bindKuisSound();
   document.getElementById("qQuit").onclick=function(e){
@@ -1806,8 +1806,8 @@ function kuisAnswer(pick, token, timeout){
     : (cid==="true"?"Benar":"Salah");
   if(feed) feed.innerHTML='<div class="'+(ok?"ok-box":"err-box")+'" style="margin-top:12px">'
     +(ok? "Benar! +"+pts+" poin 🎉" : (timeout? "Waktu habis! ⏰" : "Kurang tepat."))
-    +'<br>Jawaban benar: <b>'+esc(rightTxt)+'</b>'
-    +((it.q.explanation)? '<br><span style="font-size:12px">'+esc(it.q.explanation)+'</span>':"")
+    +'<br>Jawaban benar: <b>'+fracHtml(rightTxt)+'</b>'
+    +((it.q.explanation)? '<br><span style="font-size:12px">'+fracHtml(it.q.explanation)+'</span>':"")
     +'</div><button class="btn btn-primary" id="qNext" style="margin-top:10px">Lanjut →</button>';
   var nb=document.getElementById("qNext");
   if(nb) nb.onclick=function(){ kuisNext(); };
@@ -1853,7 +1853,7 @@ function renderKuisDone(){
       : (a.pick==="true"?"Benar":"Salah"));
     return '<div class="card rev-item '+(a.ok?"rev-correct":"rev-wrong")+'"><div class="q-meta"><span class="q-num">'+(i+1)+'</span><span class="badge">'+(a.ok?"✓ Benar":"✕ Salah")+'</span></div>'
       +'<div style="font-size:14px;margin-bottom:6px">'+fracHtml(a.it.kind==="mc"?a.it.q.question:a.it.text)+'</div>'
-      +'<div style="font-size:13px">Jawabanmu: <b>'+esc(yours)+'</b><br>Benar: <b>'+esc(rightTxt)+'</b></div></div>';
+      +'<div style="font-size:13px">Jawabanmu: <b>'+fracHtml(yours)+'</b><br>Benar: <b>'+fracHtml(rightTxt)+'</b></div></div>';
   }).join("");
   view.innerHTML='<div class="card result-hero"><div class="q-meta" style="justify-content:center"><span class="q-num">HASIL KUIS</span><span class="badge">'+esc(window.subjectName(Q.subject))+'</span></div>'
     +'<div class="score-big">⭐ '+Q.score+'</div>'
