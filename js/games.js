@@ -25,13 +25,25 @@ function cleanWord(w){
   return String(w||"").toUpperCase().replace(/[^A-Z]/g,"");
 }
 
+/* ---------- ikon SVG garis (tajam di semua device, tanpa emoji) ---------- */
+window.ICO = {
+  clipboard: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="19" y1="20" x2="19" y2="14"/></svg>',
+  target: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="#1f6feb"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a2 2 0 0 0 2 5h1M17 6h3a2 2 0 0 1-2 5h-1"/></svg>',
+  book: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+};
+
 /* ---------- label mode belajar ---------- */
 var LEARN_MODES = {
-  ujian: { title: "Ujian TKA Standar", icon: "📋", color: "#1f6feb",
+  ujian: { title: "Ujian TKA Standar", icon: window.ICO.clipboard, color: "#1f6feb",
            desc: "Latihan ujian dengan sistem simulasi TKA, lengkap dengan timer, navigasi soal, penilaian, dan pembahasan." },
-  tts:   { title: "TTS Algoritma & Logika", icon: "🧩", color: "#16a34a",
+  tts:   { title: "TTS Algoritma & Logika", icon: window.ICO.grid, color: "#16a34a",
            desc: "Asah pemahaman materi melalui permainan teka-teki silang dengan petunjuk dan kotak jawaban." },
-  kuis:  { title: "Quick Quiz / Tebak-tebakan", icon: "⚡", color: "#0284c7",
+  kuis:  { title: "Quick Quiz / Tebak-tebakan", icon: window.ICO.bolt, color: "#0284c7",
            desc: "Uji pengetahuan melalui kuis interaktif dengan pertanyaan, pilihan jawaban, skor, dan timer." }
 };
 window.LEARN_MODES = LEARN_MODES;

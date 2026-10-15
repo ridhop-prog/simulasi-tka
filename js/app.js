@@ -323,7 +323,7 @@ function modeFeats(m){
 function modeBtn(m){
   if(m==="ujian") return '<a class="btn btn-primary" href="#/mapel?mode=ujian">Mulai Ujian CBT →</a>';
   if(m==="tts") return '<a class="btn btn-green" href="#/mapel?mode=tts">Mainkan TTS</a>';
-  return '<a class="btn btn-teal" href="#/mapel?mode=kuis">Tantang Kuis Kilat →</a>';
+  return '<a class="btn btn-teal" href="#/mapel?mode=kuis">Mulai Kuis Kilat →</a>';
 }
 function vDashboard(){
   var hist=window.TKAStore.getHistory();
@@ -339,7 +339,7 @@ function vDashboard(){
       +'<div class="mode-ico" style="background:'+d.color+'">'+d.icon+'</div>'
       +'<div class="mode-cat">'+modeCat(m)+'</div>'
       +'<h3>'+esc(d.title)+'</h3><p>'+esc(d.desc)+'</p>'
-      +'<div class="mode-feats">'+modeFeats(m).map(function(f){return '<span>◉ '+esc(f)+'</span>'}).join("")+'</div>'
+      +'<div class="mode-feats">'+modeFeats(m).map(function(f){return '<span>'+esc(f)+'</span>'}).join("")+'</div>'
       +modeBtn(m)+'</div>';
   }).join("");
   var recent = hist.slice(0,5).map(function(h){return histRow(h);}).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai dari salah satu mode belajar!</div>';
@@ -350,26 +350,26 @@ function vDashboard(){
   }).join("") || '<p class="hint">Belum ada skor — mainkan sesi pertamamu!</p>';
   var need=Math.max(0,5-wk);
   view.innerHTML =
-    '<div class="hero"><div><div><span class="code-chip">console.log("Siap Ujian!");</span><span class="class-pill">● PPLG/RPL Class 2026/2027</span><span class="hero-sub">Kurikulum Merdeka CBT</span></div>'
-    +'<h1>Level Up Kompetensi TKA RPL &amp; PPLG! 🚀</h1>'
-    +'<p>Asah kesiapan Ujian Kemampuan Akademik Kejuruan melalui simulasi adaptif CBT, tantangan Teka-Teki Silang logika algoritma, dan kuis kilat gamifikasi — 100% cepat &amp; tersimpan lokal.</p></div>'
+    '<div class="hero"><div><div><span class="code-chip">PPLG / RPL • Kurikulum Merdeka</span><span class="class-pill">Data tersimpan lokal di perangkat</span></div>'
+    +'<h1>Simulasi Tes Kemampuan Akademik SMK</h1>'
+    +'<p>Latihan terstruktur untuk TKA: simulasi ujian berwaktu, teka-teki silang materi kejuruan, dan kuis kilat — lengkap dengan pembahasan tiap soal.</p></div>'
     +'<div class="hero-actions"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn btn-primary" href="#/generator">Buat Prompt AI</a></div></div>'
     +'<div class="stats">'
-    +'<div class="card stat"><div class="stat-top"><span class="stat-label">TOTAL LATIHAN</span><span class="stat-ico" style="background:#e8f0fe">🎮</span></div><div class="stat-num"><b>'+totalSim+'</b><span class="stat-unit">sesi</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">⚡ +'+xp+' XP</span></div><div class="stat-bar"><i style="width:'+Math.min(100,totalSim/8*100)+'%"></i></div><div class="stat-foot">Target mingguan: '+wk+' dari 8 sesi</div></div>'
-    +'<div class="card stat"><div class="stat-top"><span class="stat-label">AKURASI RATA-RATA</span><span class="stat-ico" style="background:#e3f3fc">🎯</span></div><div class="stat-num"><b>'+avg+'</b><span class="stat-unit">/100</span><span class="stat-tag" style="background:'+(avg>=75?"#e4f6eb;color:#14703c":"#fdf1de;color:#8a5a00")+'">'+(avg>=75?"🎉 Mantap":"📈 Perlu Asah")+'</span></div><div class="stat-bar"><i style="width:'+avg+'%"></i></div><div class="stat-foot">'+(totalSim?"+data dari "+totalSim+" sesi":"Belum ada data")+'</div></div>'
-    +'<div class="card stat"><div class="stat-top"><span class="stat-label">HIGH SCORE</span><span class="stat-ico" style="background:#fdf1de">🏆</span></div><div class="stat-num"><b>'+best+'</b><span class="stat-unit">pts</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">'+(best>=80?"🏆 Rekor Baru":"💪 Terus Berlatih")+'</span></div><div class="stat-bar"><i style="width:'+best+'%"></i></div><div class="stat-foot">'+esc(bestSubj)+'</div></div>'
-    +'<div class="card stat"><div class="stat-top"><span class="stat-label">KOLEKSI SOAL</span><span class="stat-ico" style="background:#e4f6eb">📚</span></div><div class="stat-num"><b>'+totalSoal+'</b><span class="stat-unit">butir</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">✓ Siap Ujian</span></div><div class="stat-bar green"><i style="width:'+Math.min(100,totalSoal/3)+'%"></i></div><div class="stat-foot">5 Mapel Kejuruan RPL</div></div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">TOTAL LATIHAN</span><span class="stat-ico" style="background:#e8f0fe">'+window.ICO.chart+'</span></div><div class="stat-num"><b>'+totalSim+'</b><span class="stat-unit">sesi</span><span class="stat-tag" style="background:#eef3fb;color:#40587c">+'+xp+' XP</span></div><div class="stat-bar"><i style="width:'+Math.min(100,totalSim/8*100)+'%"></i></div><div class="stat-foot">Target mingguan: '+wk+' dari 8 sesi</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">AKURASI RATA-RATA</span><span class="stat-ico" style="background:#e3f3fc">'+window.ICO.target+'</span></div><div class="stat-num"><b>'+avg+'</b><span class="stat-unit">/100</span><span class="stat-tag" style="background:'+(avg>=75?"#e4f6eb;color:#14703c":"#fdf1de;color:#8a5a00")+'">'+(avg>=75?"Baik":"Perlu Asah")+'</span></div><div class="stat-bar"><i style="width:'+avg+'%"></i></div><div class="stat-foot">'+(totalSim?"+data dari "+totalSim+" sesi":"Belum ada data")+'</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">HIGH SCORE</span><span class="stat-ico" style="background:#fdf1de">'+window.ICO.trophy+'</span></div><div class="stat-num"><b>'+best+'</b><span class="stat-unit">pts</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">'+(best>=80?"Rekor Baru":"Terus Berlatih")+'</span></div><div class="stat-bar"><i style="width:'+best+'%"></i></div><div class="stat-foot">'+esc(bestSubj)+'</div></div>'
+    +'<div class="card stat"><div class="stat-top"><span class="stat-label">KOLEKSI SOAL</span><span class="stat-ico" style="background:#e4f6eb">'+window.ICO.book+'</span></div><div class="stat-num"><b>'+totalSoal+'</b><span class="stat-unit">butir</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">Siap Ujian</span></div><div class="stat-bar green"><i style="width:'+Math.min(100,totalSoal/3)+'%"></i></div><div class="stat-foot">5 Mapel Kejuruan RPL</div></div></div>'
     +'<div class="section-title">Pilih Mode Belajar</div>'
-    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian serius, santai teka-teki, atau duel kilat. <span class="xp-note">⭐ Dapatkan reward XP setiap sesi</span></p>'
+    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian berwaktu, teka-teki silang, atau kuis kilat. <span class="xp-note">Setiap sesi yang selesai menambah XP</span></p>'
     +'<div class="grid-modes">'+modes+'</div>'
     +'<div class="dash-bottom"><div>'
     +'<div class="section-title">Riwayat Belajar Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent);font-weight:700">Lihat Semua Sesi →</a></div>'
     +'<div class="hist-list">'+recent+'</div></div>'
-    +'<div class="card side-panel"><div class="side-head">Target &amp; Ranking <span class="badge">Minggu Ini</span></div>'
-    +'<div><div class="target-row"><span>Target 5 Ujian CBT</span><b>'+Math.min(wk,5)+' / 5 Ujian</b></div><div class="target-bar"><i style="width:'+Math.min(100,wk/5*100)+'%"></i></div><div class="hint">Kurang '+need+' simulasi lagi untuk raih badge “CBT Master 🚀”</div></div>'
+    +'<div class="card side-panel"><div class="side-head">Target &amp; Rekap <span class="badge">Minggu Ini</span></div>'
+    +'<div><div class="target-row"><span>Target 5 Ujian CBT</span><b>'+Math.min(wk,5)+' / 5 Ujian</b></div><div class="target-bar"><i style="width:'+Math.min(100,wk/5*100)+'%"></i></div><div class="hint">Kurang '+need+' sesi lagi untuk mencapai target 5 Ujian minggu ini</div></div>'
     +'<div class="target-row"><span><b>SKOR TERBAIK KAMU</b></span><span class="hint">Lokal</span></div>'
     +'<div class="top-list">'+top3+'</div>'
-    +'<div class="tip-box">💡 <b>Tip CBT:</b> kerjakan soal flowchart &amp; pseudocode lebih awal untuk efisiensi waktu 40%.</div>'
+    +'<div class="tip-box"><b>Tip belajar:</b> kerjakan dulu soal yang mudah, tandai soal yang sulit untuk ditinjau sebelum waktu habis.</div>'
     +'</div></div>';
 }
 
@@ -419,7 +419,7 @@ function vMapel(mode){
     ? '<div class="card pad feat-card"><div class="feat-accent"></div>'
       +'<div class="feat-head"><span class="badge dark">5IN1</span><span class="pill gold">★ Format Resmi Terintegrasi</span></div>'
       +'<h3>TKA Lengkap — Semua Mapel Berurutan</h3>'
-      +'<div class="feat-meta">🗂 135 butir soal &nbsp;•&nbsp; 🕐 ±5 jam 45 menit &nbsp;•&nbsp; Paket resmi otomatis &nbsp;•&nbsp; Multi-sesi berseri</div>'
+      +'<div class="feat-meta">135 butir soal &nbsp;•&nbsp; ±5 jam 45 menit &nbsp;•&nbsp; Paket resmi otomatis &nbsp;•&nbsp; Multi-sesi berseri</div>'
       +'<p>Ujian seperti TKA sebenarnya: 5 bagian berurutan dengan timer tiap mapel, jeda waktu istirahat antar-bagian, penilaian terpisah per mapel, serta kalkulasi nilai gabungan simulasi secara komprehensif.</p>'
       +'<div class="feat-checks"><span>✓ Soal Teracak</span><span>✓ Timer Otomatis Per Sesi</span><span>✓ Rapor Lengkap &amp; Pembahasan</span></div>'
       +'<div class="feat-act"><a class="btn btn-primary" href="#/setup-lengkap">Atur &amp; Mulai TKA Lengkap →</a></div></div>'
@@ -442,7 +442,7 @@ function vMapel(mode){
     +'<button class="radio-pill'+(f==="umum"?" sel":"")+'" data-f="umum">Umum / Wajib</button>'
     +'<button class="radio-pill'+(f==="kejuruan"?" sel":"")+'" data-f="kejuruan">Kejuruan RPL</button></div></div>'
     +'<div class="grid-subjects">'+cards+kustom+'</div>'
-    +'<div class="tip-box" style="margin-top:14px">💡 <b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
+    +'<div class="tip-box" style="margin-top:14px"><b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
   view.querySelectorAll("[data-f]").forEach(function(b){
     b.onclick=function(){ S.mapelFilter=b.getAttribute("data-f"); vMapel(mode); window.scrollTo(0,0); };
   });
@@ -451,11 +451,6 @@ function vMapel(mode){
 function xpTotal(){
   return window.TKAStore.getHistory().reduce(function(a,h){return a+(h.nilai||0);},0);
 }
-function levelOf(xp){
-  var lvl=Math.floor(xp/250)+1;
-  var titles=["Pemula","Penjelajah","Pejuang","Ksatria","Master","Legenda"];
-  return {lvl:lvl, title:titles[Math.min(lvl-1,titles.length-1)]};
-}
 function weekCount(){
   var week=Date.now()-7*24*3600*1000;
   return window.TKAStore.getHistory().filter(function(h){return h.date>=week;}).length;
@@ -463,8 +458,7 @@ function weekCount(){
 function refreshTopbar(){
   var el=document.getElementById("lvlPill");
   if(!el) return;
-  var xp=xpTotal(), lv=levelOf(xp);
-  el.textContent="Lvl "+lv.lvl+" "+lv.title+" • "+xp+" XP";
+  el.textContent=xpTotal()+" XP";
 }
 function histScoreCls(nilai){ return nilai>=80?"":nilai>=60?"mid":"low"; }
 function histStatusPill(h){
@@ -1004,7 +998,7 @@ function renderSim(){
     +'<div class="exam-subj"><span class="exam-logo" style="background:'+dotColor+'">▦</span><b>'+headTitle+'</b><span class="badge">SMK PPLG</span></div>'
     +'<div class="exam-sub">Target ≤ '+budgetPace+' / soal • <span class="sys-ok">● Sistem Aktif</span></div>'
     +'</div>'
-    +'<div class="exam-timer"><span class="t-ico">⏱</span><span id="simTimer" class="timer'+timerCls+'">'+fmtTime(remain)+'</span><span class="badge warn">'+modeBadge+'</span></div>'
+    +'<div class="exam-timer">'+window.ICO.clock+'<span id="simTimer" class="timer'+timerCls+'">'+fmtTime(remain)+'</span><span class="badge warn">'+modeBadge+'</span></div>'
     +'<button class="btn btn-sm btn-list" id="btnList">▦ Daftar Soal <span class="pill">'+qNo+'/'+blk.count+'</span></button>'
     +'</div>'
     +'<div class="exam-main"><div class="card exam-card">'
@@ -1272,12 +1266,12 @@ function vHasil(){
     +'<div class="hint" style="text-align:center">SKOR AKHIR</div></div>'
     +'<div class="eval-hero-m">'+headPill+'<h3 style="margin:8px 0 4px">'+verdict+'</h3>'
     +'<p class="hint">'+answeredN+' dari '+r.total+' butir soal berhasil dikonfirmasi. Jangan berkecil hati, jadikan hasil ini bahan evaluasi strategi waktu Anda.</p>'
-    +'<div class="hint">🟢 KKM Minimum: '+KKM_NILAI+'.00 &nbsp;•&nbsp; '+(defisit>=0?'<b style="color:var(--green)">Surplus: +'+defisit+'.00</b>':'<b style="color:var(--red)">Defisit: '+defisit+'.00</b>')+'</div></div>'
+    +'<div class="hint">KKM Minimum: '+KKM_NILAI+'.00 &nbsp;•&nbsp; '+(defisit>=0?'<b style="color:var(--green)">Surplus: +'+defisit+'.00</b>':'<b style="color:var(--red)">Defisit: '+defisit+'.00</b>')+'</div></div>'
     +'<div class="eval-hero-r"><b>AKSI REKOMENDASI</b><a class="btn btn-primary" href="#/review?id='+r.id+'">Pelajari Kunci Jawaban →</a><a class="btn" href="'+redoTo+'">Coba Ujian Ulang ⟳</a></div></div>'
-    +'<div class="section-title">📊 Statistik Performa Utama <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">Total '+r.total+' Soal</span></div>'
+    +'<div class="section-title">Statistik Performa Utama <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">Total '+r.total+' Soal</span></div>'
     +'<div class="eval-stats">'
     +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico ok">✓</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">'+okPct+'% Rata</span></div><b>'+r.correct+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>JAWABAN BENAR</b><br>Target ketuntasan minimal '+Math.ceil(r.total*KKM_NILAI/100)+' soal</div></div>'
-    +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico err">✕</span><span class="stat-tag" style="background:#fdecec;color:#b91c1c">'+wrongPct+'% Terjawab Salah</span></div><b>'+r.wrong+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>JAWABAN SALAH</b><br>'+(r.wrong? "Pelajari pembahasan soal-soal ini":"Tidak ada jawaban keliru 🎉")+'</div></div>'
+    +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico err">✕</span><span class="stat-tag" style="background:#fdecec;color:#b91c1c">'+wrongPct+'% Terjawab Salah</span></div><b>'+r.wrong+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>JAWABAN SALAH</b><br>'+(r.wrong? "Pelajari pembahasan soal-soal ini":"Tidak ada jawaban keliru.")+'</div></div>'
     +'<div class="card eval-stat"><div class="stat-top"><span class="eval-ico warn">○</span><span class="stat-tag" style="background:#fdf1de;color:#8a5a00">'+emptyPct+'% Tidak Dijawab</span></div><b>'+(r.empty||0)+'</b><span class="stat-unit">Soal</span><div class="stat-foot"><b>KOSONG'+(reasonId==="TIMEOUT"?'/TIMEOUT':"")+'</b><br>'+(reasonId==="TIMEOUT"?"Soal hangus otomatis akibat batas waktu":"Soal dilewati tanpa jawaban")+'</div></div>'
     +'</div>'
     +'<div class="eval-stats">'
@@ -1286,14 +1280,14 @@ function vHasil(){
     +'<div class="card eval-stat"><div class="stat-top"><span class="stat-label">EFISIENSI PENGERJAAN</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">Mode '+esc(modeLbl)+'</span></div><div class="stat-num"><b style="font-size:20px">'+effTxt+'</b></div><div class="stat-bar"><i style="width:'+(effLvl/4*100)+'%"></i></div><div class="stat-foot">Tingkat '+effLvl+'/4<br>'+effNote+'</div></div>'
     +'</div>'
     +'<div class="dash-bottom"><div>'
-    +'<div class="section-title">📝 Rincian Berdasarkan Tipe Soal <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">'+Object.keys(byType).length+' Kategori</span></div>'
+    +'<div class="section-title">Rincian Berdasarkan Tipe Soal <span style="float:right;font-size:12px;color:var(--muted);font-weight:600">'+Object.keys(byType).length+' Kategori</span></div>'
     +'<div class="card pad">'+Object.keys(byType).map(function(t){
       var d=byType[t], pct=d.t?Math.round(d.c/d.t*100):0;
       return '<div class="type-row"><div class="target-row"><span><span class="tdot"></span><b>'+esc(typeName[t]||typeLabel(t))+'</b> <span class="hint">('+d.t+' Soal)</span></span><b>'+d.c+' / '+d.t+' <span class="hint">('+pct+'%)</span></b></div>'
         +'<div class="target-bar"><i style="width:'+pct+'%"></i></div>'
         +'<div class="hint">'+d.c+' Benar • '+d.w+' Salah</div></div>';
     }).join("")+'</div>'
-    +'<div class="section-title">⚙ Parameter Teknis Pengerjaan</div>'
+    +'<div class="section-title">Parameter Teknis Pengerjaan</div>'
     +'<div class="card pad"><table class="mini param">'
     +'<tr><td>Total Jumlah Soal</td><td style="text-align:right"><b>'+r.total+' Butir Soal</b></td></tr>'
     +'<tr><td>Soal Dikonfirmasi (Submit)</td><td style="text-align:right"><b>'+answeredN+' Butir ('+answeredPct+'%)</b></td></tr>'
@@ -1307,9 +1301,9 @@ function vHasil(){
         return '<tr><td>'+(i+1)+'. '+esc(window.subjectName(b.subject))+'</td><td>'+b.correct+'/'+b.total+'</td><td><b>'+b.nilai+'</b></td></tr>';
       }).join("")+'</table></div>' : "")
     +'</div>'
-    +'<div class="card side-panel"><div class="side-head">🤖 Smart CBT Evaluator</div><span class="badge">Analisis Otomatis</span>'
-    +'<div class="tip-box"><b>⏱ Evaluasi Manajemen Waktu</b><br>Rata-rata waktu membaca mencapai '+avgTxt+'/soal. '+(paceOk?"Pertahankan ritme ini dan pakai sisa waktu untuk memeriksa kembali jawaban.":"Kurangi waktu per soal agar seluruh butir sempat dikerjakan sebelum waktu habis.")+'</div>'
-    +'<div class="tip-box"><b>📚 Rekomendasi Materi Belajar</b><br>Untuk simulasi berikutnya dalami: '+esc(sk.s)+'<br><span class="subj-meta" style="margin:8px 0 0">'+sk.p.map(function(p){return '<span class="pill">'+esc(p)+'</span>'}).join("")+'</span></div>'
+    +'<div class="card side-panel"><div class="side-head">Evaluator Otomatis</div><span class="badge">Analisis Otomatis</span>'
+    +'<div class="tip-box"><b>Evaluasi Manajemen Waktu</b><br>Rata-rata waktu membaca mencapai '+avgTxt+'/soal. '+(paceOk?"Pertahankan ritme ini dan pakai sisa waktu untuk memeriksa kembali jawaban.":"Kurangi waktu per soal agar seluruh butir sempat dikerjakan sebelum waktu habis.")+'</div>'
+    +'<div class="tip-box"><b>Rekomendasi Materi Belajar</b><br>Untuk simulasi berikutnya dalami: '+esc(sk.s)+'<br><span class="subj-meta" style="margin:8px 0 0">'+sk.p.map(function(p){return '<span class="pill">'+esc(p)+'</span>'}).join("")+'</span></div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn btn-sm" href="#/mapel?mode=kuis">Pelajari Kuis-Kuis</a><a class="btn btn-sm btn-primary" href="'+redoTo+'">Target Latihan Baru</a></div>'
     +'<p class="hint">Nilai simulasi ini tercatat otomatis di riwayat. Anda dapat melihat kunci jawaban dan pembahasan untuk mengkaji tiap butir soal.</p>'
     +'</div></div>';
@@ -1714,11 +1708,11 @@ function vKuis(subject){
 }
 function kuisSoundBtn(){
   var on=window.TKASound.on();
-  return '<button class="btn btn-sm" id="qSound" title="Suara">'+(on?"🔊":"🔇")+'</button>';
+  return '<button class="btn btn-sm" id="qSound" title="Suara">'+(on?"Suara: Aktif":"Suara: Mati")+'</button>';
 }
 function bindKuisSound(){
   var b=document.getElementById("qSound");
-  if(b) b.onclick=function(e){ e.stopPropagation(); window.TKASound.set(!window.TKASound.on()); b.textContent=window.TKASound.on()?"🔊":"🔇"; if(window.TKASound.on()) window.TKASound.click(); };
+  if(b) b.onclick=function(e){ e.stopPropagation(); window.TKASound.set(!window.TKASound.on()); b.textContent=window.TKASound.on()?"Suara: Aktif":"Suara: Mati"; if(window.TKASound.on()) window.TKASound.click(); };
 }
 function renderKuisSetup(subject, avail){
   var s=subjOf(subject);
@@ -1792,7 +1786,7 @@ function renderKuisQ(){
       +'<p class="hint">Pernyataan: tentukan Benar atau Salah.</p>';
   }
   view.innerHTML='<div class="quiz-top"><a href="#/mapel?mode=kuis" class="btn btn-sm" id="qQuit">✕ Keluar</a>'
-    +'<div class="quiz-score">⭐ <b id="qScore">'+Q.score+'</b>'+(Q.streak>1?' <span class="badge ok">🔥 ×'+Q.streak+'</span>':"")+'</div>'
+    +'<div class="quiz-score">Skor <b id="qScore">'+Q.score+'</b>'+(Q.streak>1?' <span class="badge ok">Streak ×'+Q.streak+'</span>':"")+'</div>'
     +kuisSoundBtn()+'</div>'
     +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div>'
     +'<div class="progress" style="margin:6px 0">Pertanyaan '+(Q.idx+1)+' dari '+total+'</div>'
@@ -1854,7 +1848,7 @@ function kuisAnswer(pick, token, timeout){
     ? (function(){ var o=it.q.options.find(function(x){return String(x.id)===String(cid)}); return o? o.id+". "+o.text : cid; })()
     : (cid==="true"?"Benar":"Salah");
   if(feed) feed.innerHTML='<div class="'+(ok?"ok-box":"err-box")+'" style="margin-top:12px">'
-    +(ok? "Benar! +"+pts+" poin 🎉" : (timeout? "Waktu habis! ⏰" : "Kurang tepat."))
+    +(ok? "Benar! +"+pts+" poin." : (timeout? "Waktu habis." : "Kurang tepat."))
     +'<br>Jawaban benar: <b>'+fracHtml(rightTxt)+'</b>'
     +((it.q.explanation)? '<br><span style="font-size:12px">'+fracHtml(it.q.explanation)+'</span>':"")
     +'</div><button class="btn btn-primary" id="qNext" style="margin-top:10px">Lanjut →</button>';
@@ -1905,7 +1899,7 @@ function renderKuisDone(){
       +'<div style="font-size:13px">Jawabanmu: <b>'+fracHtml(yours)+'</b><br>Benar: <b>'+fracHtml(rightTxt)+'</b></div></div>';
   }).join("");
   view.innerHTML='<div class="card result-hero"><div class="q-meta" style="justify-content:center"><span class="q-num">HASIL KUIS</span><span class="badge">'+esc(window.subjectName(Q.subject))+'</span></div>'
-    +'<div class="score-big">⭐ '+Q.score+'</div>'
+    +'<div class="score-big">'+Q.score+'</div>'
     +'<div class="hint">Nilai '+nilai+' • '+Q.correct+'/'+total+' benar • Beruntun terbaik ×'+Q.best+'</div>'
     +'<div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap">'
     +'<button class="btn btn-primary" id="kAgain">Main Lagi ▶</button>'
@@ -2012,7 +2006,7 @@ function renderTTS(focusKey){
     +'<button class="btn" id="ttsNew">Acak Baru</button>'
     +'<button class="btn" id="ttsFinish">Selesaikan</button></div></div>'
     +'<div class="card tts-side">'
-    +'<div class="tts-chead"><div><b>📋 Daftar Petunjuk Soal</b></div><span class="hint">'+g.entries.length+' Pertanyaan</span></div>'
+    +'<div class="tts-chead"><div><b>Daftar Petunjuk Soal</b></div><span class="hint">'+g.entries.length+' Pertanyaan</span></div>'
     +'<div class="clue-tabs"><button class="clue-tab'+(T.tab==="H"?" sel":"")+'" data-tab="H">MENDATAR ('+nH+')</button>'
     +'<button class="clue-tab'+(T.tab==="V"?" sel":"")+'" data-tab="V">MENURUN ('+nV+')</button></div>'
     +'<div class="clue-sub hint">'+(T.tab==="H"?"MENDATAR (ACROSS)":"MENURUN (DOWN)")+'</div>'
@@ -2198,7 +2192,7 @@ function ttsFinish(auto){
     wrong:0, empty:0, durationMs:0, status:"COMPLETED", finishReason:"COMPLETED", mode:"tts",
     totalMs:0, avgSecPerQ:0, budgetSecPerQ:0, questions:[], answers:{}
   });
-  modal('<h3>TTS Selesai! 🧩</h3>'
+  modal('<h3>TTS Selesai!</h3>'
     +'<div class="score-big" style="font-size:52px">'+nilai+'</div>'
     +'<p class="hint">'+lockedCount+'/'+g.totalCells+' huruf benar • '+esc(window.subjectName(T.subject))+'</p>'
     +'<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px">'
