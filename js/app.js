@@ -321,7 +321,7 @@ function vDashboard(){
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">HIGH SCORE</span><span class="stat-ico" style="background:#fdf1de">🏆</span></div><div class="stat-num"><b>'+best+'</b><span class="stat-unit">pts</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">'+(best>=80?"🏆 Rekor Baru":"💪 Terus Berlatih")+'</span></div><div class="stat-bar"><i style="width:'+best+'%"></i></div><div class="stat-foot">'+esc(bestSubj)+'</div></div>'
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">KOLEKSI SOAL</span><span class="stat-ico" style="background:#e4f6eb">📚</span></div><div class="stat-num"><b>'+totalSoal+'</b><span class="stat-unit">butir</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">✓ Siap Ujian</span></div><div class="stat-bar green"><i style="width:'+Math.min(100,totalSoal/3)+'%"></i></div><div class="stat-foot">5 Mapel Kejuruan RPL</div></div></div>'
     +'<div class="section-title">Pilih Mode Belajar</div>'
-    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian serius, santai teka-teki, atau duel kilat. <span style="float:right">⭐ Dapatkan reward XP setiap sesi</span></p>'
+    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian serius, santai teka-teki, atau duel kilat. <span class="xp-note">⭐ Dapatkan reward XP setiap sesi</span></p>'
     +'<div class="grid-modes">'+modes+'</div>'
     +'<div class="dash-bottom"><div>'
     +'<div class="section-title">Riwayat Belajar Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent);font-weight:700">Lihat Semua Sesi →</a></div>'

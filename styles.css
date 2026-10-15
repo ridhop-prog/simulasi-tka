@@ -62,8 +62,9 @@ a{color:inherit;text-decoration:none}
 /* ===== Kartu & badge generik ===== */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .pad{padding:20px}
-.section-title{font-size:17px;font-weight:800;margin:24px 0 4px;letter-spacing:-.2px}
-.section-sub{font-size:13px;color:var(--muted);margin:0 0 12px}
+.section-title{font-size:17px;font-weight:800;margin:24px 0 4px;letter-spacing:-.2px;text-wrap:balance}
+.section-sub{font-size:13px;color:var(--muted);margin:0 0 12px;overflow:hidden}
+.section-sub .xp-note{float:right;white-space:nowrap}
 .badge{font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eef3fb;border:1px solid var(--line);color:#40587c;white-space:nowrap}
 .badge.ok{background:var(--green-bg);color:#14703c;border-color:#bfe6cf}
 .badge.warn{background:var(--amber-bg);color:#8a5a00;border-color:#f3ddae}
@@ -97,7 +98,7 @@ a{color:inherit;text-decoration:none}
 .mode-ico{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:25px;color:#fff;box-shadow:0 6px 14px rgba(0,0,0,.15)}
 .mode-flag{position:absolute;top:16px;right:16px;font-size:11px;font-weight:700;padding:4px 11px;border-radius:999px}
 .mode-cat{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--muted)}
-.mode-card-lg h3{margin:2px 0 0;font-size:17px;font-weight:800}
+.mode-card-lg h3{margin:2px 0 0;font-size:17px;font-weight:800;text-wrap:balance;overflow-wrap:break-word}
 .mode-card-lg p{margin:0;color:#3d5474;font-size:13px;line-height:1.65;flex:1}
 .mode-feats{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:#3d5474;width:100%}
 .mode-card-lg .btn{width:100%;margin-top:8px}
@@ -389,6 +390,9 @@ kbd{background:#fff;border:1px solid #b9cdf0;border-bottom-width:2px;border-radi
   .avatar{width:30px;height:30px;font-size:12px}
   .hero{padding:20px 18px}
   .hero-actions .btn{flex:1}
+  .section-title{font-size:16px;margin-top:20px}
+  .section-sub .xp-note{display:block;float:none;margin-top:4px;white-space:normal}
+  .mode-card-lg h3{font-size:16px}
   .pad{padding:16px}
   .grid-subjects{grid-template-columns:1fr}
   .stats{gap:10px}
