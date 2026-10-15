@@ -382,7 +382,10 @@ kbd{background:#fff;border:1px solid #b9cdf0;border-bottom-width:2px;border-radi
   .topbar{padding:8px 0 0}
   .topbar-inner{padding:8px 10px;gap:8px;border-radius:14px}
   .brand-text{font-size:13px}
-  .lvl-pill{font-size:11px;padding:6px 10px}
+  .brand-text small{display:none}
+  .brand-mark{font-size:11px;padding:6px 8px}
+  .lvl-pill{font-size:10px;padding:5px 9px;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+  .topbar-side{gap:6px}
   .avatar{width:30px;height:30px;font-size:12px}
   .hero{padding:20px 18px}
   .hero-actions .btn{flex:1}
