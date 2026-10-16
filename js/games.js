@@ -25,25 +25,35 @@ function cleanWord(w){
   return String(w||"").toUpperCase().replace(/[^A-Z]/g,"");
 }
 
-/* ---------- ikon SVG garis (tajam di semua device, tanpa emoji) ---------- */
+/* ---------- ikon SVG garis (tajam di semua device, tanpa emoji) ----------
+   Semua memakai currentColor agar warna diatur dari CSS di tiap konteks. */
 window.ICO = {
-  clipboard: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><line x1="9" y1="11" x2="15" y2="11"/><line x1="9" y1="15" x2="15" y2="15"/></svg>',
-  grid: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
-  bolt: '<svg viewBox="0 0 24 24" width="24" height="24" fill="#fff"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-  chart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="19" y1="20" x2="19" y2="14"/></svg>',
-  target: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="#1f6feb"/></svg>',
-  trophy: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a2 2 0 0 0 2 5h1M17 6h3a2 2 0 0 1-2 5h-1"/></svg>',
-  book: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1f6feb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/></svg>',
-  clock: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#b45309" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'
+  clipboard: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M9 13l2 2 4-4"/></svg>',
+  grid: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  hash: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>',
+  bolt: '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20v-8M12 20V5M19 20v-6"/></svg>',
+  target: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM7 6H4a2 2 0 0 0 2 5h1M17 6h3a2 2 0 0 1-2 5h-1"/></svg>',
+  book: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h13"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  bulb: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0-4 10c.8.8 1 1.6 1 3h6c0-1.4.2-2.2 1-3a6 6 0 0 0-4-10zM9.5 19h5M10.5 21.5h3"/></svg>',
+  star: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2.5l2.95 6.36 6.95.82-5.2 4.73 1.4 6.86L12 17.9l-6.1 3.37 1.4-6.86-5.2-4.73 6.95-.82z"/></svg>',
+  speaker: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>',
+  speakerOff: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" stroke="none"/><path d="M16 9l6 6M22 9l-6 6"/></svg>',
+  gamepad: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5v-1a5 5 0 0 1 5-5z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.8" cy="14" r=".9" fill="currentColor"/></svg>',
+  medal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.8 13.4 7 21l5-2.6L17 21l-1.8-7.6"/></svg>',
+  doc: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6zM14 2v4h4M9 12h6M9 16h6"/></svg>',
+  checkBadge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>'
 };
 
 /* ---------- label mode belajar ---------- */
 var LEARN_MODES = {
-  ujian: { title: "Ujian TKA Standar", icon: window.ICO.clipboard, color: "#1f6feb",
+  ujian: { title: "Ujian TKA Standar", icon: "clipboard", color: "#1f6feb",
            desc: "Latihan ujian dengan sistem simulasi TKA, lengkap dengan timer, navigasi soal, penilaian, dan pembahasan." },
-  tts:   { title: "TTS Algoritma & Logika", icon: window.ICO.grid, color: "#16a34a",
+  tts:   { title: "TTS Algoritma & Logika", icon: "hash", color: "#0e8a4d",
            desc: "Asah pemahaman materi melalui permainan teka-teki silang dengan petunjuk dan kotak jawaban." },
-  kuis:  { title: "Quick Quiz / Tebak-tebakan", icon: window.ICO.bolt, color: "#0284c7",
+  kuis:  { title: "Quick Quiz / Tebak-tebakan", icon: "bolt", color: "#0e7490",
            desc: "Uji pengetahuan melalui kuis interaktif dengan pertanyaan, pilihan jawaban, skor, dan timer." }
 };
 window.LEARN_MODES = LEARN_MODES;

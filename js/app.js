@@ -333,13 +333,13 @@ function vDashboard(){
   var bestSubj = totalSim? (function(){ var b=hist.reduce(function(a,h){return h.nilai>=(a?a.nilai:-1)?h:a},null); return b?window.subjectName(b.subject):"—"; })():"—";
   var totalSoal = window.TKAStore.getAllBank().length;
   var xp=xpTotal(), wk=weekCount();
-  var modes=["ujian","tts","kuis"].map(function(m){
+  var modes=["ujian","tts","kuis"].map(function(m,i){
     var d=window.LEARN_MODES[m];
-    return '<div class="card mode-card-lg">'+modeFlag(m)
-      +'<div class="mode-ico" style="background:'+d.color+'">'+d.icon+'</div>'
+    return '<div class="card mode-card-lg"><span class="mode-num">0'+(i+1)+'</span>'+modeFlag(m)
+      +'<div class="mode-ico" style="background:'+d.color+';color:#fff">'+window.ICO[d.icon]+'</div>'
       +'<div class="mode-cat">'+modeCat(m)+'</div>'
       +'<h3>'+esc(d.title)+'</h3><p>'+esc(d.desc)+'</p>'
-      +'<div class="mode-feats">'+modeFeats(m).map(function(f){return '<span>'+esc(f)+'</span>'}).join("")+'</div>'
+      +'<div class="mode-feats">'+modeFeats(m).map(function(f){return '<span>✓ '+esc(f)+'</span>'}).join("")+'</div>'
       +modeBtn(m)+'</div>';
   }).join("");
   var recent = hist.slice(0,5).map(function(h){return histRow(h);}).join("") || '<div class="card pad hint">Belum ada riwayat simulasi. Mulai dari salah satu mode belajar!</div>';
@@ -349,27 +349,39 @@ function vDashboard(){
       +'<span class="top-pts">'+h.nilai+' Pts</span></div>';
   }).join("") || '<p class="hint">Belum ada skor — mainkan sesi pertamamu!</p>';
   var need=Math.max(0,5-wk);
+  var bankN = window.TKA_CONFIG.subjects.map(function(s){ return {name:s.short||s.name, n:window.TKAStore.getBank(s.id).length}; });
+  var tickItems=bankN.map(function(x){return x.name;}).concat(["135 SOAL PAKET RESMI","PEMBAHASAN TIAP SOAL"]);
+  var tick=tickItems.map(function(t){return '<span>'+esc(t)+' ✦</span>';}).join("");
   view.innerHTML =
-    '<div class="hero"><div><div><span class="code-chip">PPLG / RPL • Kurikulum Merdeka</span><span class="class-pill">Data tersimpan lokal di perangkat</span></div>'
-    +'<h1>Simulasi Tes Kemampuan Akademik SMK</h1>'
-    +'<p>Latihan terstruktur untuk TKA: simulasi ujian berwaktu, teka-teki silang materi kejuruan, dan kuis kilat — lengkap dengan pembahasan tiap soal.</p></div>'
-    +'<div class="hero-actions"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn btn-primary" href="#/generator">Buat Prompt AI</a></div></div>'
+    '<div class="hero"><div class="hero-main">'
+    +'<p class="eyebrow">Latihan TKA — SMK PPLG / RPL • Kurikulum Merdeka</p>'
+    +'<h1>Berlatih TKA <em>senyaman</em> main, seserius ujian.</h1>'
+    +'<p class="lede">Simulasi CBT berwaktu dengan soal yang selalu diacak, teka-teki silang dari materi kejuruanmu, dan kuis kilat buat pemanasan. Nilai dan soalmu tersimpan di perangkat sendiri.</p>'
+    +'<div class="hero-actions"><a class="btn" href="#/bank">Bank Soal</a><a class="btn" href="#/import">Import Soal</a><a class="btn btn-primary" href="#/generator">Buat Prompt AI</a></div>'
+    +'<div class="hero-meta"><span class="meta-chip">'+totalSoal+' butir soal</span><span class="meta-chip">5 mapel kejuruan</span><span class="meta-chip">100% tersimpan lokal</span></div></div>'
+    +'<div class="ticket"><div class="ticket-head"><span>KARTU PESERTA</span><span>2026/2027</span></div>'
+    +'<div class="ticket-rows">'+bankN.map(function(x){return '<div class="ticket-row"><span>'+esc(x.name)+'</span><span>'+x.n+' soal</span></div>';}).join("")+'</div>'
+    +'<div class="ticket-stub"><div class="barcode"></div><small>BERLAKU: KAPAN SAJA • TANPA AKUN</small></div></div></div>'
+    +'<div class="ticker" aria-hidden="true"><div class="ticker-in">'+tick+tick+'</div></div>'
+    +'<p class="eyebrow" style="margin-top:20px">01 — Catatan Belajarmu</p>'
     +'<div class="stats">'
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">TOTAL LATIHAN</span><span class="stat-ico" style="background:#e8f0fe">'+window.ICO.chart+'</span></div><div class="stat-num"><b>'+totalSim+'</b><span class="stat-unit">sesi</span><span class="stat-tag" style="background:#eef3fb;color:#40587c">+'+xp+' XP</span></div><div class="stat-bar"><i style="width:'+Math.min(100,totalSim/8*100)+'%"></i></div><div class="stat-foot">Target mingguan: '+wk+' dari 8 sesi</div></div>'
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">AKURASI RATA-RATA</span><span class="stat-ico" style="background:#e3f3fc">'+window.ICO.target+'</span></div><div class="stat-num"><b>'+avg+'</b><span class="stat-unit">/100</span><span class="stat-tag" style="background:'+(avg>=75?"#e4f6eb;color:#14703c":"#fdf1de;color:#8a5a00")+'">'+(avg>=75?"Baik":"Perlu Asah")+'</span></div><div class="stat-bar"><i style="width:'+avg+'%"></i></div><div class="stat-foot">'+(totalSim?"+data dari "+totalSim+" sesi":"Belum ada data")+'</div></div>'
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">HIGH SCORE</span><span class="stat-ico" style="background:#fdf1de">'+window.ICO.trophy+'</span></div><div class="stat-num"><b>'+best+'</b><span class="stat-unit">pts</span><span class="stat-tag" style="background:#e8f0fe;color:#1a5fd0">'+(best>=80?"Rekor Baru":"Terus Berlatih")+'</span></div><div class="stat-bar"><i style="width:'+best+'%"></i></div><div class="stat-foot">'+esc(bestSubj)+'</div></div>'
     +'<div class="card stat"><div class="stat-top"><span class="stat-label">KOLEKSI SOAL</span><span class="stat-ico" style="background:#e4f6eb">'+window.ICO.book+'</span></div><div class="stat-num"><b>'+totalSoal+'</b><span class="stat-unit">butir</span><span class="stat-tag" style="background:#e4f6eb;color:#14703c">Siap Ujian</span></div><div class="stat-bar green"><i style="width:'+Math.min(100,totalSoal/3)+'%"></i></div><div class="stat-foot">5 Mapel Kejuruan RPL</div></div></div>'
-    +'<div class="section-title">Pilih Mode Belajar</div>'
-    +'<p class="section-sub">Sesuaikan gaya belajarmu: ujian berwaktu, teka-teki silang, atau kuis kilat. <span class="xp-note">Setiap sesi yang selesai menambah XP</span></p>'
+    +'<p class="eyebrow" style="margin-top:26px">02 — Pilih Cara Belajarmu</p>'
+    +'<div class="section-title">Tiga mode, satu tujuan.</div>'
+    +'<p class="section-sub">Ujian serius, teka-teki santai, atau duel kilat. <span class="xp-note">Setiap sesi selesai menambah XP</span></p>'
     +'<div class="grid-modes">'+modes+'</div>'
     +'<div class="dash-bottom"><div>'
-    +'<div class="section-title">Riwayat Belajar Terakhir <a href="#/riwayat" style="font-size:12px;color:var(--accent);font-weight:700">Lihat Semua Sesi →</a></div>'
+    +'<p class="eyebrow" style="margin-top:26px">03 — Terakhir Dimainkan</p>'
+    +'<div class="section-title">Riwayat Belajar <a href="#/riwayat" style="font-size:12px;color:var(--accent);font-weight:700">Lihat Semua Sesi →</a></div>'
     +'<div class="hist-list">'+recent+'</div></div>'
     +'<div class="card side-panel"><div class="side-head">Target &amp; Rekap <span class="badge">Minggu Ini</span></div>'
     +'<div><div class="target-row"><span>Target 5 Ujian CBT</span><b>'+Math.min(wk,5)+' / 5 Ujian</b></div><div class="target-bar"><i style="width:'+Math.min(100,wk/5*100)+'%"></i></div><div class="hint">Kurang '+need+' sesi lagi untuk mencapai target 5 Ujian minggu ini</div></div>'
     +'<div class="target-row"><span><b>SKOR TERBAIK KAMU</b></span><span class="hint">Lokal</span></div>'
     +'<div class="top-list">'+top3+'</div>'
-    +'<div class="tip-box"><b>Tip belajar:</b> kerjakan dulu soal yang mudah, tandai soal yang sulit untuk ditinjau sebelum waktu habis.</div>'
+    +'<div class="tip-box">'+window.ICO.bulb+'<b>Tip belajar:</b> kerjakan dulu soal yang mudah, tandai soal yang sulit untuk ditinjau sebelum waktu habis.</div>'
     +'</div></div>';
 }
 
@@ -442,7 +454,7 @@ function vMapel(mode){
     +'<button class="radio-pill'+(f==="umum"?" sel":"")+'" data-f="umum">Umum / Wajib</button>'
     +'<button class="radio-pill'+(f==="kejuruan"?" sel":"")+'" data-f="kejuruan">Kejuruan RPL</button></div></div>'
     +'<div class="grid-subjects">'+cards+kustom+'</div>'
-    +'<div class="tip-box" style="margin-top:14px"><b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
+    +'<div class="tip-box" style="margin-top:14px">'+window.ICO.bulb+'<b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
   view.querySelectorAll("[data-f]").forEach(function(b){
     b.onclick=function(){ S.mapelFilter=b.getAttribute("data-f"); vMapel(mode); window.scrollTo(0,0); };
   });
@@ -998,7 +1010,7 @@ function renderSim(){
     +'<div class="exam-subj"><span class="exam-logo" style="background:'+dotColor+'">▦</span><b>'+headTitle+'</b><span class="badge">SMK PPLG</span></div>'
     +'<div class="exam-sub">Target ≤ '+budgetPace+' / soal • <span class="sys-ok">● Sistem Aktif</span></div>'
     +'</div>'
-    +'<div class="exam-timer">'+window.ICO.clock+'<span id="simTimer" class="timer'+timerCls+'">'+fmtTime(remain)+'</span><span class="badge warn">'+modeBadge+'</span></div>'
+    +'<div class="exam-timer"><span style="color:#b45309;display:inline-flex">'+window.ICO.clock+'</span><span id="simTimer" class="timer'+timerCls+'">'+fmtTime(remain)+'</span><span class="badge warn">'+modeBadge+'</span></div>'
     +'<button class="btn btn-sm btn-list" id="btnList">▦ Daftar Soal <span class="pill">'+qNo+'/'+blk.count+'</span></button>'
     +'</div>'
     +'<div class="exam-main"><div class="card exam-card">'
@@ -1708,11 +1720,11 @@ function vKuis(subject){
 }
 function kuisSoundBtn(){
   var on=window.TKASound.on();
-  return '<button class="btn btn-sm" id="qSound" title="Suara">'+(on?"Suara: Aktif":"Suara: Mati")+'</button>';
+  return '<button class="btn btn-sm" id="qSound" title="Suara">'+(on?window.ICO.speaker+' Aktif':window.ICO.speakerOff+' Mati')+'</button>';
 }
 function bindKuisSound(){
   var b=document.getElementById("qSound");
-  if(b) b.onclick=function(e){ e.stopPropagation(); window.TKASound.set(!window.TKASound.on()); b.textContent=window.TKASound.on()?"Suara: Aktif":"Suara: Mati"; if(window.TKASound.on()) window.TKASound.click(); };
+  if(b) b.onclick=function(e){ e.stopPropagation(); window.TKASound.set(!window.TKASound.on()); b.innerHTML=window.TKASound.on()?window.ICO.speaker+" Aktif":window.ICO.speakerOff+" Mati"; if(window.TKASound.on()) window.TKASound.click(); };
 }
 function renderKuisSetup(subject, avail){
   var s=subjOf(subject);
@@ -1786,7 +1798,7 @@ function renderKuisQ(){
       +'<p class="hint">Pernyataan: tentukan Benar atau Salah.</p>';
   }
   view.innerHTML='<div class="quiz-top"><a href="#/mapel?mode=kuis" class="btn btn-sm" id="qQuit">✕ Keluar</a>'
-    +'<div class="quiz-score">Skor <b id="qScore">'+Q.score+'</b>'+(Q.streak>1?' <span class="badge ok">Streak ×'+Q.streak+'</span>':"")+'</div>'
+    +'<div class="quiz-score"><span class="qstar">'+window.ICO.star+'</span>Skor <b id="qScore">'+Q.score+'</b>'+(Q.streak>1?' <span class="badge ok"><span class="qbolt">'+window.ICO.bolt+'</span>Streak ×'+Q.streak+'</span>':"")+'</div>'
     +kuisSoundBtn()+'</div>'
     +'<div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div>'
     +'<div class="progress" style="margin:6px 0">Pertanyaan '+(Q.idx+1)+' dari '+total+'</div>'
@@ -1994,7 +2006,7 @@ function renderTTS(focusKey){
   var ae=ttsActiveEntry();
   view.innerHTML='<a href="#/mapel?mode=tts" class="btn btn-sm" id="ttsBack">← Pilih Mapel</a>'
     +'<div class="tts-wrap"><div class="card tts-board">'
-    +'<div class="tts-chead"><div><b>PAPAN TEKA-TEKI SILANG</b><div class="hint">Klik kotak untuk mulai mengetik jawaban</div></div>'
+    +'<div class="tts-chead"><div class="tts-title"><span class="ico-ink">'+window.ICO.grid+'</span><div><b>PAPAN TEKA-TEKI SILANG</b><div class="hint">Klik kotak untuk mulai mengetik jawaban</div></div></div>'
     +'<span class="tab-hint"><kbd>Tab</kbd> Pindah kata berikutnya</span></div>'
     +'<div class="tts-prog"><div class="q-progress"><div class="q-progress-fill" style="width:'+pct+'%"></div></div><div class="hint">Terisi benar '+lockedCount+'/'+g.totalCells+'</div></div>'
     +'<div class="xw-wrap"><div class="xw-grid" style="grid-template-columns:repeat('+g.cols+',var(--xw))">'+cells+'</div></div>'
@@ -2006,7 +2018,7 @@ function renderTTS(focusKey){
     +'<button class="btn" id="ttsNew">Acak Baru</button>'
     +'<button class="btn" id="ttsFinish">Selesaikan</button></div></div>'
     +'<div class="card tts-side">'
-    +'<div class="tts-chead"><div><b>Daftar Petunjuk Soal</b></div><span class="hint">'+g.entries.length+' Pertanyaan</span></div>'
+    +'<div class="tts-chead"><div class="tts-title"><span class="ico-ink">'+window.ICO.hash+'</span><div><b>Daftar Petunjuk Soal</b></div></div><span class="hint">'+g.entries.length+' Pertanyaan</span></div>'
     +'<div class="clue-tabs"><button class="clue-tab'+(T.tab==="H"?" sel":"")+'" data-tab="H">MENDATAR ('+nH+')</button>'
     +'<button class="clue-tab'+(T.tab==="V"?" sel":"")+'" data-tab="V">MENURUN ('+nV+')</button></div>'
     +'<div class="clue-sub hint">'+(T.tab==="H"?"MENDATAR (ACROSS)":"MENURUN (DOWN)")+'</div>'
