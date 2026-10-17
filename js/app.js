@@ -406,7 +406,7 @@ function vMapel(mode){
     .filter(function(s){ return f==="all" || MAPEL_RUMPUN[s.id]===f; })
     .map(function(s){
     var nBank=window.TKAStore.getBank(s.id).length;
-    var extra="", go="", btn="Pilih Mapel ›";
+    var extra="", go="", btn="Pilih Mapel ›", mode=mode;
     if(mode==="tts"){
       var nW=(window.BANK_TTS&&window.BANK_TTS[s.id])?window.BANK_TTS[s.id].length:0;
       extra = nW? nW+' kata TTS' : 'Belum ada kata TTS';
@@ -423,6 +423,7 @@ function vMapel(mode){
       +'<div class="subj-top"><span class="subj-icon" style="background:'+s.color+'">'+esc(s.icon)+'</span>'
       +'<div><h3>'+esc(s.name)+'</h3><div class="subj-sub">'+extra+' • '+esc(MAPEL_CAT[s.id])+'</div></div></div>'
       +'<p>'+esc(MAPEL_DESC[s.id]||s.desc)+'</p>'
+      +'<div class="subj-meta"><span class="pill">Tersedia '+(mode==="tts"? nW : mode==="kuis"? avail : nBank)+'</span><span class="pill">'+(mode==="ujian"? "5IN1" : "1 MAPEL")+'</span></div>'
       +(go? '<a class="btn btn-primary btn-block" href="'+go+'">'+btn+'</a>'
           : '<div class="warn-box">Data belum tersedia untuk mode ini. Kelola soal lewat <a href="#/bank" style="text-decoration:underline">Bank Soal</a>.</div>')
       +'</div>';
@@ -454,7 +455,8 @@ function vMapel(mode){
     +'<button class="radio-pill'+(f==="umum"?" sel":"")+'" data-f="umum">Umum / Wajib</button>'
     +'<button class="radio-pill'+(f==="kejuruan"?" sel":"")+'" data-f="kejuruan">Kejuruan RPL</button></div></div>'
     +'<div class="grid-subjects">'+cards+kustom+'</div>'
-    +'<div class="tip-box" style="margin-top:14px">'+window.ICO.bulb+'<b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>';
+    +'<div class="tip-box" style="margin-top:16px">'+window.ICO.bulb+'<b>Tips Simulasi CBT:</b> Hasil pengerjaan disimpan otomatis di sistem lokal (LocalStorage) secara berkala. Anda dapat meninjau skor, grafik kemampuan, dan kunci pembahasan lengkap di menu <a href="#/riwayat" style="text-decoration:underline">Riwayat Ujian</a> setelah tes selesai.</div>'
+    +'<div class="mapel-bar" style="margin:6px 0 0"><span class="code-chip">TKA • PPLG/RPL 2026/2027</span><span class="hint">Soal diacak tiap sesi dari bank yang tersimpan.</span></div>';
   view.querySelectorAll("[data-f]").forEach(function(b){
     b.onclick=function(){ S.mapelFilter=b.getAttribute("data-f"); vMapel(mode); window.scrollTo(0,0); };
   });
