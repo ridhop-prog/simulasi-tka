@@ -263,7 +263,7 @@ pre.ex{background:var(--bg2);border:var(--bw) solid var(--ink);border-radius:16p
 
 /* ===== Layar ujian CBT ===== */
 .sim-shell{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
-.exam-top{background:var(--purple);border:var(--bw) solid var(--ink);border-radius:24px;box-shadow:0 6px 0 var(--purple-edge);padding:14px 20px;display:flex;align-items:center;gap:18px;margin:0 auto 22px;max-width:1160px;flex-wrap:wrap;position:sticky;top:90px;z-index:20;color:#fff}
+.exam-top{background:var(--purple);border:var(--bw) solid var(--ink);border-radius:24px;box-shadow:0 7px 0 var(--purple-edge);padding:14px 20px;display:flex;align-items:center;gap:18px;margin:0 auto 30px;max-width:1160px;flex-wrap:wrap;position:sticky;top:14px;z-index:20;color:#fff}
 .exam-title{flex:1;min-width:230px}
 .exam-subj{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:900;flex-wrap:wrap;color:#fff;font-family:var(--display)}
 .exam-logo{width:30px;height:30px;border-radius:10px;color:#fff;font-size:15px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;background:#fff!important;border:2px solid var(--ink)}
@@ -279,7 +279,7 @@ pre.ex{background:var(--bg2);border:var(--bw) solid var(--ink);border-radius:16p
 #simTimer.warn{color:#B4560A}
 #simTimer.danger{color:var(--red);animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.3}}
-.exam-main{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:20px;align-items:start;max-width:1160px;margin:0 auto}
+.exam-main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start;max-width:1160px;margin:0 auto}
 .exam-card{padding:26px 26px 0;overflow:hidden;border-radius:26px;box-shadow:7px 7px 0 var(--ink)}
 .exam-meta{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
 .b-soal{background:var(--ink);color:var(--yellow);font-family:var(--display);font-weight:800;font-size:13px;padding:6px 16px;border-radius:999px;white-space:nowrap}
@@ -306,7 +306,7 @@ pre.ex{background:var(--bg2);border:var(--bw) solid var(--ink);border-radius:16p
 .ropt.multi .picked{display:none}
 .ropt.multi.sel .picked{display:inline-flex;background:var(--accent);color:#fff;font-size:12px;font-weight:900;border-radius:999px;padding:5px 14px;border:2px solid var(--ink)}
 .exam-foot{display:flex;gap:12px;align-items:center;margin:24px -26px 0;padding:18px 26px;background:var(--bg2);border-top:var(--bw) solid var(--ink);border-radius:0 0 24px 24px;flex-wrap:wrap}
-.exam-side{background:var(--card);border:var(--bw) solid var(--ink);border-radius:26px;box-shadow:7px 7px 0 var(--ink);padding:20px;position:sticky;top:180px;max-height:calc(100vh - 200px);overflow:auto}
+.exam-side{background:var(--card);border:var(--bw) solid var(--ink);border-radius:26px;box-shadow:7px 7px 0 var(--ink);padding:20px;position:sticky;top:118px;max-height:calc(100vh - 140px);overflow:auto}
 .exam-side-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:10px}
 .exam-side-head b{font-family:var(--display);font-weight:800;font-size:18px}
 #sideClose{display:none}
@@ -337,7 +337,7 @@ pre.ex{background:var(--bg2);border:var(--bw) solid var(--ink);border-radius:16p
 .btn-finish-red:hover{background:#FF6470}
 .btn-finish-red:active{transform:translateY(4px);box-shadow:none}
 .btn-finish-red.sm{width:auto;margin-top:0;padding:9px 18px;font-size:13px}
-.exam-bottom{background:var(--card);border:var(--bw) solid var(--ink);border-radius:24px;box-shadow:6px 6px 0 var(--ink);padding:14px 20px;display:flex;align-items:center;gap:14px;margin:24px auto 0;max-width:1160px;flex-wrap:wrap}
+.exam-bottom{background:var(--card);border:var(--bw) solid var(--ink);border-radius:24px;box-shadow:6px 6px 0 var(--ink);padding:14px 20px;display:flex;align-items:center;gap:14px;margin:30px auto 0;max-width:1160px;flex-wrap:wrap}
 .jump-bar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;flex:1}
 .exam-backdrop{display:none}
 .sim-nav{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
@@ -609,7 +609,7 @@ kbd{background:#fff;border:2px solid var(--ink);border-bottom-width:4px;border-r
   .mode-grid{grid-template-columns:minmax(0,1fr)}
   .result-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:11px}
   .result-hero{padding:20px 12px}
-  .exam-top{top:74px;padding:10px 12px;gap:10px}
+  .exam-top{top:10px;padding:10px 12px;gap:10px;margin-bottom:22px}
   .exam-timer{order:3;width:100%;justify-content:center}
   #simTimer{font-size:21px}
   .exam-card{padding:20px 16px 0}
