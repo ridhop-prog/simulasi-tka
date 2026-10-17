@@ -942,7 +942,7 @@ function richText(t, quotes){
     else if(sq%2===0) s=s.replace(/'[^']+'/g, wrap);
     else if(dq%2===0) s=s.replace(/"[^"]+"/g, wrap);
   }
-  s=s.replace(/(\d+(?:[.,]\d+)?)/g,'<span class="qnum">$1</span>');
+  // Angka sengaja dibiarkan polos (tanpa sorot) agar teks soal tidak penuh warna.
   saved.forEach(function(f,i){
     var inner='<span class="frac"><span class="fnum">'+f.b+'</span><span class="fden">'+f.c+'</span></span>';
     s=s.split("@@"+L[i]+"@@").join(f.m?'<span class="fmix">'+f.a+inner+'</span>':inner);
