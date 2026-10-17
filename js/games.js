@@ -44,7 +44,8 @@ window.ICO = {
   gamepad: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 8h10a5 5 0 0 1 5 5v1a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5v-1a5 5 0 0 1 5-5z"/><path d="M8 11v3M6.5 12.5h3"/><circle cx="15.5" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.8" cy="14" r=".9" fill="currentColor"/></svg>',
   medal: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M8.8 13.4 7 21l5-2.6L17 21l-1.8-7.6"/></svg>',
   doc: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h8l4 4v16H6zM14 2v4h4M9 12h6M9 16h6"/></svg>',
-  checkBadge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>'
+  checkBadge: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>',
+  ornament: '<svg viewBox="0 0 140 140" fill="none" aria-hidden="true" preserveAspectRatio="xMidYMid meet"><circle cx="70" cy="70" r="64" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 8"/><circle cx="70" cy="70" r="48" stroke="currentColor" stroke-width="1" opacity=".55"/><path d="M70 6v128M6 70h128" stroke="currentColor" stroke-width="1" opacity=".3"/><circle cx="70" cy="70" r="9" fill="currentColor" opacity=".9"/></svg>'
 };
 
 /* ---------- label mode belajar ---------- */
