@@ -321,9 +321,9 @@ function modeFeats(m){
   return ["Kombo streak pengganda poin","Timer per soal + suara"];
 }
 function modeBtn(m){
-  if(m==="ujian") return '<a class="btn btn-oncolor" href="#/mapel?mode=ujian">Mulai Ujian CBT →</a>';
-  if(m==="tts") return '<a class="btn btn-oncolor" href="#/mapel?mode=tts">Mainkan TTS →</a>';
-  return '<a class="btn btn-oncolor" href="#/mapel?mode=kuis">Mulai Kuis Kilat →</a>';
+  if(m==="ujian") return '<a class="btn btn-oncolor" href="#/mapel?mode=ujian">Mulai Ujian CBT</a>';
+  if(m==="tts") return '<a class="btn btn-oncolor" href="#/mapel?mode=tts">Mainkan TTS</a>';
+  return '<a class="btn btn-oncolor" href="#/mapel?mode=kuis">Mulai Kuis Kilat</a>';
 }
 function vDashboard(){
   var hist=window.TKAStore.getHistory();
@@ -354,14 +354,15 @@ function vDashboard(){
   var tick=tickItems.map(function(t){return '<span>'+esc(t)+' ✦</span>';}).join("");
   view.innerHTML =
     '<div class="hero"><span class="hero-ornament" aria-hidden="true">'+window.ICO.ornament+'</span><div class="hero-main">'
-    +'<p class="eyebrow">Edisi 2026/2027 — SMK PPLG / RPL</p>'
-    +'<h1><span class="drop-cap">B</span>erlatih TKA <em>senyaman</em> main, seserius ujian.</h1>'
-    +'<p class="lede">Simulasi CBT berwaktu dengan soal yang selalu diacak, teka-teki silang dari materi kejuruanmu, dan kuis kilat buat pemanasan. Nilai dan soalmu tersimpan di perangkat sendiri — tanpa akun, tanpa server.</p>'
-    +'<div class="hero-actions"><a class="btn btn-primary" href="#/mapel?mode=ujian">Mulai Ujian CBT →</a><a class="btn" href="#/mapel?mode=kuis">Kuis Kilat</a><a class="btn" href="#/bank">Bank Soal</a></div>'
+    +'<p class="eyebrow">Edisi 2026/2027 - SMK PPLG / RPL</p>'
+    +'<h1><span class="drop-cap">B</span>erlatih TKA <em>senyaman</em> main, seserius ujian!</h1>'
+    +'<div class="hero-bubble"><p class="lede">Soal selalu diacak tiap sesi, ada teka-teki silang dari materi kejuruan, plus kuis kilat buat pemanasan. Semua tersimpan di HP kamu sendiri - tanpa akun, tanpa server.</p></div>'
+    +'<div class="hero-actions"><a class="btn btn-primary" href="#/mapel?mode=ujian">Mulai Ujian CBT</a><a class="btn" href="#/mapel?mode=kuis">Kuis Kilat</a><a class="btn" href="#/bank">Bank Soal</a></div>'
     +'<div class="hero-meta"><span class="meta-chip">'+totalSoal+' butir soal</span><span class="meta-chip">5 mapel kejuruan</span><span class="meta-chip">3 mode belajar</span><span class="meta-chip">100% tersimpan lokal</span></div></div>'
+    +'<div class="hero-side"><div class="mascot" aria-hidden="true">'+window.ICO.mascot+'</div>'
     +'<div class="ticket"><div class="ticket-head"><span>KARTU PESERTA</span><span>2026/2027</span></div>'
     +'<div class="ticket-rows">'+bankN.map(function(x){return '<div class="ticket-row"><span>'+esc(x.name)+'</span><span>'+x.n+' soal</span></div>';}).join("")+'</div>'
-    +'<div class="ticket-stub"><div class="barcode"></div><small>BERLAKU: KAPAN SAJA • TANPA AKUN</small></div></div></div>'
+    +'<div class="ticket-stub"><div class="barcode"></div><small>BERLAKU: KAPAN SAJA - TANPA AKUN</small></div></div></div></div>'
     +'<div class="ticker" aria-hidden="true"><div class="ticker-in">'+tick+tick+'</div></div>'
     +'<p class="eyebrow" style="margin-top:20px">01 — Catatan Belajarmu</p>'
     +'<div class="stats">'
