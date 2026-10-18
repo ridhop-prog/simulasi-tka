@@ -1,0 +1,31 @@
+{
+  "appName": "Simulasi TKA",
+  "version": "2.4.0",
+  "updated": "2026-10-19",
+  "targets": {
+    "windows": {
+      "label": "Windows",
+      "icon": "windows",
+      "ready": false,
+      "url": "",
+      "note": "Installer .exe belum tersedia. Butuh Rust (Tauri) atau Electron.",
+      "requirement": "Windows 10/11, 64-bit"
+    },
+    "android": {
+      "label": "Android",
+      "icon": "android",
+      "ready": false,
+      "url": "",
+      "note": "File .apk belum tersedia. Butuh JDK 17 (yang terpasang saat ini baru JDK 8).",
+      "requirement": "Android 7.0 ke atas"
+    },
+    "web": {
+      "label": "Web / PWA",
+      "icon": "globe",
+      "ready": true,
+      "url": "index.html",
+      "note": "Bisa langsung dibuka, dan bisa di-install ke layar utama.",
+      "requirement": "Chrome, Edge, Safari"
+    }
+  }
+}
