@@ -1,0 +1,57 @@
+{
+  "name": "SIMULASI TKA - Latihan & Simulasi TKA SMK",
+  "short_name": "Simulasi TKA",
+  "description": "Platform CBT Simulasi TKA untuk siswa SMK jurusan PPLG/RPL. Ujian berwaktu, teka-teki silang, kuis kilat, dan pembahasan lengkap. Data tersimpan di perangkat sendiri.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FFF0D2",
+  "theme_color": "#2B2348",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mulai Ujian CBT",
+      "short_name": "Ujian",
+      "description": "Langsung ke katalog mata pelajaran",
+      "url": "./#/mapel?mode=ujian",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Quick Quiz",
+      "short_name": "Kuis",
+      "description": "Latihan kilat dengan skor dan streak",
+      "url": "./#/mapel?mode=kuis",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Riwayat",
+      "short_name": "Riwayat",
+      "description": "Lihat hasil dan pembahasan latihan",
+      "url": "./#/riwayat",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
