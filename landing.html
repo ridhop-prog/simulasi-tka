@@ -101,7 +101,7 @@ p{margin:0 0 14px;line-height:1.7}
 @keyframes tick{to{transform:translateX(-50%)}}
 
 /* ===== 2. DOWNLOAD ===== */
-.dl-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin-top:26px}
+.dl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:26px;max-width:820px}
 .dl-card{background:var(--card);border:var(--bw) solid var(--ink);border-radius:26px;padding:24px 22px;
   box-shadow:var(--sh);display:flex;flex-direction:column;gap:12px;align-items:flex-start;
   transition:transform .18s,box-shadow .18s}
@@ -257,8 +257,8 @@ footer{background:var(--card);border-top:var(--bw) solid var(--ink);margin-top:2
   <div class="wrap">
     <p class="eyebrow">Pilih Sesuai Perangkatmu</p>
     <h2>Download &amp; Install</h2>
-    <p class="lede">Aplikasi ini bisa dijalankan langsung di browser, di-install ke PC/laptop,
-       atau dipasang ke layar utama HP. Pilih yang paling cocok.</p>
+    <p class="lede">Pilih versi yang ingin dipasang di perangkatmu. Kartu versi web
+       tersedia di menu navigasi atas.</p>
 
     <div class="dl-grid">
 
@@ -272,7 +272,8 @@ footer{background:var(--card);border-top:var(--bw) solid var(--ink);margin-top:2
         <h3>Untuk Windows</h3>
         <span class="soon">Belum tersedia</span>
         <p class="desc">Installer untuk PC dan laptop Windows. Untuk sekarang, versi web
-           sudah bisa di-install ke Start Menu lewat Chrome atau Edge tanpa perlu unduh apa pun.</p>
+           sudah bisa di-install ke Start Menu lewat Chrome atau Edge tanpa perlu
+           unduh apa pun.</p>
         <span class="req" id="req-win">Windows 10/11, 64-bit</span>
         <button class="btn btn-blue dl-btn" data-target="windows" disabled>Segera Hadir</button>
         <p class="dl-note" id="note-win"></p>
@@ -288,37 +289,21 @@ footer{background:var(--card);border-top:var(--bw) solid var(--ink);margin-top:2
         <h3>Untuk Android</h3>
         <span class="soon">Belum tersedia</span>
         <p class="desc">File APK untuk HP. Alternatif yang paling cepat: buka versi web di
-           Chrome lalu pilih <b>Install app</b>, hasilnya sama dan bisa jalan offline.</p>
+           Chrome lalu pilih <b>Install app</b>, hasilnya sama dan bisa jalan offline
+           tanpa file tambahan.</p>
         <span class="req" id="req-and">Android 7.0 ke atas</span>
         <button class="btn btn-green dl-btn" data-target="android" disabled>Segera Hadir</button>
         <p class="dl-note" id="note-and"></p>
       </div>
 
-      <!-- WEB -->
-      <div class="dl-card">
-        <div class="dl-ico web" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor"
-               stroke-width="2.2" stroke-linecap="round">
-            <circle cx="12" cy="12" r="9.2"/>
-            <path d="M2.8 12h18.4M12 2.8c2.4 2.6 3.7 5.7 3.7 9.2s-1.3 6.6-3.7 9.2c-2.4-2.6-3.7-5.7-3.7-9.2S9.6 5.4 12 2.8z"/>
-          </svg>
-        </div>
-        <h3>Untuk Web / PWA</h3>
-        <span class="badge-ok" style="background:#DCFCE7;color:#0C7A34;border:2px solid #2B2348;border-radius:999px;padding:3px 11px;font-size:11.5px;font-weight:900">Tersedia</span>
-        <p class="desc">Buka langsung di browser tanpa unduhan. Bisa juga di-install ke
-           layar utama HP maupun Start Menu di PC, dan tetap jalan saat offline.</p>
-        <span class="req" id="req-web">Chrome, Edge, atau Safari</span>
-        <a class="btn btn-purple dl-btn" href="index.html" id="btn-web" data-target="web">Buka Aplikasi Web</a>
-        <p class="dl-note" id="note-web"></p>
       </div>
 
-    </div>
-
     <div class="dl-alert">
-      <b>Catatan jujur:</b> tombol Windows dan Android masih nonaktif karena file
+      <b>Catatan jujur:</b> kedua tombol di atas masih nonaktif karena file
       <span class="kode">.exe</span> dan <span class="kode">.apk</span>-nya belum ada.
       File-nya baru tersedia setelah tooling build dipasang. Sementara ini,
-      <b>versi web sudah berfungsi penuh di semua perangkat</b> — dan bisa di-install
+      <b>versi web sudah berfungsi penuh di semua perangkat</b> — buka lewat tombol
+      <span class="kode">Buka Aplikasi</span> di navigasi atas, lalu bisa di-install
       seperti aplikasi biasa.
     </div>
   </div>

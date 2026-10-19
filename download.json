@@ -18,14 +18,6 @@
       "url": "",
       "note": "File .apk belum tersedia. Butuh JDK 17 (yang terpasang saat ini baru JDK 8).",
       "requirement": "Android 7.0 ke atas"
-    },
-    "web": {
-      "label": "Web / PWA",
-      "icon": "globe",
-      "ready": true,
-      "url": "index.html",
-      "note": "Bisa langsung dibuka, dan bisa di-install ke layar utama.",
-      "requirement": "Chrome, Edge, Safari"
     }
   }
 }
