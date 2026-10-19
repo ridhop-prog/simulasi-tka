@@ -172,7 +172,7 @@ h1,h2,h3{letter-spacing:-.01em}
 .mode-card-lg .btn{width:100%;margin-top:12px}
 
 /* ===== Dashboard bawah ===== */
-.dash-bottom{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:16px;margin-top:6px;align-items:start}
+.dash-bottom{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;margin-top:6px;align-items:start}
 .hist-list{display:grid;gap:14px}
 .hist-item{display:flex;align-items:center;gap:14px;padding:15px 17px;transition:transform .15s}
 .hist-item:hover{transform:translateX(4px) rotate(-.5deg)}
@@ -184,19 +184,25 @@ h1,h2,h3{letter-spacing:-.01em}
 .hist-main b{font-size:14.5px}
 .hist-main div{font-size:12.5px;color:var(--muted);margin-top:3px;font-weight:700}
 .hist-act{display:flex;gap:6px;flex-shrink:0;align-items:center;flex-wrap:wrap}
-.side-panel{padding:20px;display:flex;flex-direction:column;gap:14px}
-.side-head{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-weight:800;font-size:18px}
-.target-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:800;gap:8px}
-.target-bar{height:13px;background:var(--bg2);border:2px solid var(--ink);border-radius:999px;overflow:hidden;margin-top:8px}
+.side-panel{padding:24px;display:flex;flex-direction:column;gap:18px}
+.side-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--display);font-weight:800;font-size:19px;line-height:1.15}
+.panel-sub{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;
+  font-size:12px;font-weight:900;letter-spacing:.7px;color:var(--muted);
+  padding-top:14px;border-top:2px dashed rgba(43,35,72,.25)}
+.panel-sub .hint{font-size:11.5px;font-weight:800;letter-spacing:0}
+.target-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;font-weight:800}
+.target-bar{height:14px;background:var(--bg2);border:2px solid var(--ink);border-radius:999px;overflow:hidden;margin-top:9px}
 .target-bar i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .5s}
-.top-list{display:flex;flex-direction:column;gap:9px}
-.top-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border:2px solid var(--ink);border-radius:16px;padding:10px 13px;font-size:13.5px}
+.side-panel .hint{font-size:12.5px;line-height:1.6;margin-top:7px}
+.top-list{display:flex;flex-direction:column;gap:11px}
+.top-row{display:flex;align-items:center;gap:13px;background:var(--bg2);border:2px solid var(--ink);border-radius:17px;padding:12px 15px;font-size:14px}
 .top-row.me{background:var(--yellow)}
-.top-rank{width:28px;height:28px;border-radius:50%;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:900;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.top-name{flex:1;min-width:0;font-weight:900}
-.top-name small{display:block;font-weight:700;color:var(--muted);font-size:11.5px}
-.top-pts{font-weight:900;color:var(--accent);white-space:nowrap;font-variant-numeric:tabular-nums}
-.tip-box{background:#FFF6D9;border:var(--bw) solid var(--ink);border-radius:18px;padding:14px 16px;font-size:13px;line-height:1.65;color:var(--ink);font-weight:700;box-shadow:var(--sh-sm)}
+.top-rank{width:32px;height:32px;border-radius:50%;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:900;font-size:13.5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.top-name{flex:1;min-width:0;font-weight:900;line-height:1.25}
+.top-name small{display:block;font-weight:700;color:var(--muted);font-size:11.5px;margin-top:2px;line-height:1.35}
+.top-pts{font-weight:900;color:#fff;background:var(--accent);border:2px solid var(--ink);border-radius:11px;
+  padding:4px 11px;white-space:nowrap;font-variant-numeric:tabular-nums;flex-shrink:0;box-shadow:0 3px 0 var(--ink)}
+.tip-box{background:#FFF6D9;border:var(--bw) solid var(--ink);border-radius:18px;padding:16px 17px;font-size:13.5px;line-height:1.65;color:var(--ink);font-weight:700;box-shadow:var(--sh-sm)}
 .tip-box svg{vertical-align:-3px;margin-right:4px;color:var(--amber)}
 
 /* ===== Katalog mapel ===== */

@@ -2,7 +2,7 @@
    di PC/laptop maupun HP. Sengaja memakai strategi cache-first untuk aset
    statis, dan network-first untuk navigasi supaya update cepat masuk. */
 
-const VERSION = "v31";
+const VERSION = "v32";
 const CACHE = "simulasi-tka-" + VERSION;
 
 // Hanya aset statis milik aplikasi. Jangan pernah cache request navigasi

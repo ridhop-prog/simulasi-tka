@@ -380,7 +380,7 @@ function vDashboard(){
     +'<div class="hist-list">'+recent+'</div></div>'
     +'<div class="card side-panel"><div class="side-head">Target &amp; Rekap <span class="badge">Minggu Ini</span></div>'
     +'<div><div class="target-row"><span>Target 5 Ujian CBT</span><b>'+Math.min(wk,5)+' / 5 Ujian</b></div><div class="target-bar"><i style="width:'+Math.min(100,wk/5*100)+'%"></i></div><div class="hint">Kurang '+need+' sesi lagi untuk mencapai target 5 Ujian minggu ini</div></div>'
-    +'<div class="target-row"><span><b>SKOR TERBAIK KAMU</b></span><span class="hint">Lokal</span></div>'
+    +'<div class="panel-sub"><span>SKOR TERBAIK KAMU</span><span class="hint">Tersimpan lokal</span></div>'
     +'<div class="top-list">'+top3+'</div>'
     +'<div class="tip-box">'+window.ICO.bulb+'<b>Tip belajar:</b> kerjakan dulu soal yang mudah, tandai soal yang sulit untuk ditinjau sebelum waktu habis.</div>'
     +'</div></div>';
